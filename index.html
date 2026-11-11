@@ -1986,13 +1986,19 @@ setMode("people");
   function begin(domain) {
     var fl = FLOWS[domain];
     G(fl.modeBtn).click(); /* same mode-switch handler as the original page */
-    state = { domain: domain, steps: fl.steps.slice(), idx: 0, history: [] };
-    botText(domain === "eng" ? "好，走工程模式。照順序問，有預設值的可以直接沿用。"
-      : domain === "dw" ? "好，走飲水機模式。照順序問，有預設值的可以直接沿用。"
-      : "好，走飲水台（多口連續出水）。照順序問，有預設值的可以直接沿用。");
+    state = { domain: domain, steps: fl.steps.slice(), idx: 0, history: [], roDerivedFor: -1, failIdx: -1, failCount: 0 };
+    botText(domain === "eng" ? "好，走工程模式。照順序問，每一欄都先幫你帶好目前值，不用改就按「就用這個」。"
+      : domain === "dw" ? "好，走飲水機模式。照順序問，每一欄都先幫你帶好目前值，不用改就按「就用這個」。"
+      : "好，走飲水台（多口連續出水）。照順序問，每一欄都先幫你帶好目前值，不用改就按「就用這個」。");
     resume();
   }
-  function advance(userText) { userSay(userText); state.idx++; resume(); }
+  function advance(userText) { userSay(userText); state.failIdx = -1; state.failCount = 0; state.idx++; resume(); }
+  function noteFail(msg) {
+    botText(msg);
+    if (state.failIdx === state.idx) state.failCount++; else { state.failIdx = state.idx; state.failCount = 1; }
+    if (state.failCount >= 2 && (state.failCount - 2) % 3 === 0)
+      botText("這一欄如果不好填：有目前值的話，按下方「就用這個」就會帶著目前值過關；或按「重新開始」從頭來，不會卡在這裡。");
+  }
 
   function ask() {
     clearChips(); inputRow.style.display = "none";
@@ -2000,8 +2006,15 @@ setMode("people");
     if (st.kind === "group") return askGroup(st);
     pushSnap();
     var el = G(st.id), m = meta(st.id);
-    var q = "<b>" + esc(m.label) + "</b>";
-    if (m.hint) q += '<span class="c-hint">' + esc(m.hint) + "</span>";
+    /* auto-derive on first entry into a roBtn step (e.g. w_host from the RO tier table) */
+    if (st.roBtn && state.roDerivedFor !== state.idx) { G("w_fromro").click(); state.roDerivedFor = state.idx; }
+    var q = '<span class="c-hint">第 ' + (state.idx + 1) + " 步／共 " + state.steps.length + " 步</span><b>" + esc(m.label) + "</b>";
+    if (m.hint && !st.roBtn) q += '<span class="c-hint">' + esc(m.hint) + "</span>";
+    if (el.tagName !== "SELECT" && el.value !== "") {
+      q += '<span class="c-hint">' + (st.roBtn
+        ? "已帶入：" + esc(el.value) + " L/h（RO 級距回推）——不用改就按「就用這個」"
+        : "已帶入目前值：" + esc(el.value) + "——不用改就按「就用這個」") + "</span>";
+    }
     botSay(q);
     if (el.tagName === "SELECT") {
       options(st.id).forEach(function (op) {
@@ -2019,24 +2032,22 @@ setMode("people");
       inputRow.style.display = "flex";
       sendBtn.onclick = function () {
         var v = inputEl.value.trim();
-        if (v === "") { botText(st.required ? "這一欄還沒填，請輸入數字。" : "這一欄還沒填，請輸入，或用下方按鈕沿用預設值。"); return; }
+        if (v === "") { noteFail(el.value !== "" ? "這一欄還沒填，請輸入，或按下方「就用這個」。" : "這一欄還沒填，請輸入。"); return; }
         if (el.type === "number") {
           var nv = parseFloat(v);
-          if (isNaN(nv)) { botText("這一欄需要數字，請重新輸入。"); return; }
-          if (el.min !== "" && nv < parseFloat(el.min)) { botText("低於最小值 " + el.min + "，請重新輸入。"); return; }
-          if (el.max !== "" && nv > parseFloat(el.max)) { botText("高於最大值 " + el.max + "，請重新輸入。"); return; }
+          if (isNaN(nv)) { noteFail("這一欄需要數字，請重新輸入。"); return; }
+          if (el.min !== "" && nv < parseFloat(el.min)) { noteFail("低於最小值 " + el.min + "，請重新輸入。"); return; }
+          if (el.max !== "" && nv > parseFloat(el.max)) { noteFail("高於最大值 " + el.max + "，請重新輸入。"); return; }
         }
         setField(st.id, v); inputEl.value = "";
         advance(v);
       };
       inputEl.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); sendBtn.onclick(); } };
-      if ((st.def || !st.required) && el.value !== "") addChip("用預設值（目前：" + el.value + "）", "primary", function () { advance("用預設值（" + el.value + "）"); });
+      if (el.value !== "") {
+        addChip("就用這個（目前：" + el.value + "）", "primary", function () { advance("就用這個（" + el.value + "）"); });
+        addChip("我要改數字", "", function () { inputEl.focus(); scroll(); });
+      }
       if (st.skip) addChip("略過", "", function () { advance("（略過）"); });
-      if (st.roBtn) addChip("以 RO 級距帶入", "", function () {
-        G("w_fromro").click(); /* original button: fills w_host from the RO tier table */
-        botText("已依原工具的 RO 級距回推帶入，目前主機製水量為 " + G("w_host").value + " L/h。沿用或改數字都可以。");
-        ask();
-      });
       setTimeout(function () { inputEl.focus(); }, 60);
     }
     utilChips(); scroll();
@@ -2054,7 +2065,7 @@ setMode("people");
   function askGroup(st) {
     pushSnap();
     clearChips(); inputRow.style.display = "none";
-    var d = botSay("<b>" + esc(st.title) + "</b>");
+    var d = botSay('<span class="c-hint">第 ' + (state.idx + 1) + " 步／共 " + state.steps.length + " 步</span><b>" + esc(st.title) + "</b>");
     var box = document.createElement("div"); box.className = "c-group";
     var row = document.createElement("div"); row.className = "c-grow"; box.appendChild(row);
     st.ids.forEach(function (id) {
