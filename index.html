@@ -1073,7 +1073,7 @@ body{background:var(--bg)}
         else items.push({ s:"warn", t:"1 水源與用途", d:"水源為" + srcLabel + "，水質波動與成分不確定性高，回收率不自動給定，須以完整水質分析定案。" });
         if (c.tds === null) items.push({ s:"unk", t:"2 TDS", d:"待確認：TDS 未輸入，回收率初篩無法判定。" });
         else if (c.tds <= 300) items.push({ s:"ok", t:"2 TDS", d:"TDS " + fmt(c.tds) + " mg/L，初篩回收率 70%，濃縮倍數 CF " + (r.cf ? r.cf.toFixed(2) : "—") + "。" });
-        else if (c.tds <= 1000) items.push({ s:"warn", t:"2 TDS", d:"TDS " + fmt(c.tds) + " mg/L，初篩回收率 " + Math.round(r.rec * 100) + "%，濃縮倍數 CF " + r.cf.toFixed(2) + "；結垢與滲透壓風險上升。" });
+        else if (c.tds <= 1000) items.push({ s:"warn", t:"2 TDS", d:"TDS " + fmt(c.tds) + " mg/L，初篩回收率 " + (r.rec !== null ? Math.round(r.rec * 100) + "%" : "不自動給定") + "，濃縮倍數 CF " + (r.cf ? r.cf.toFixed(2) : "—") + "；結垢與滲透壓風險上升。" });
         else items.push({ s:"bad", t:"2 TDS", d:"TDS " + fmt(c.tds) + " mg/L ＞1,000：停止自動選型，需完整水質分析與工程審查，不自動給定回收率。" });
         if (c.sdi === null && c.turb === null) items.push({ s:"unk", t:"3 濁度／SDI", d:"待確認：SDI 與濁度未輸入，無法判定膜污染風險。" });
         else if (c.sdi !== null && c.sdi > 5) items.push({ s:"bad", t:"3 濁度／SDI", d:"SDI " + c.sdi + " ＞5：停止自動選型，需完整水質分析並加強前處理後再評估。" });
@@ -1947,11 +1947,13 @@ setMode("people");
   };
 
   var state = null; /* {domain, steps, idx, history:[{idx, snap}]} */
-  function clearChips() { chipsEl.innerHTML = ""; }
+  var askGen = 0; /* bumped on every re-render; clicks from older renders are ignored */
+  function clearChips() { askGen++; chipsEl.innerHTML = ""; }
   function addChip(text, cls, fn) {
     var b = document.createElement("button");
     b.type = "button"; b.className = "c-chip" + (cls ? " " + cls : ""); b.textContent = text;
-    b.addEventListener("click", fn); chipsEl.appendChild(b); return b;
+    var g = askGen;
+    b.addEventListener("click", function () { if (g !== askGen) return; fn(); }); chipsEl.appendChild(b); return b;
   }
   function utilChips() {
     if (state && state.history.length) addChip("修改上一步", "util", undo);
@@ -1977,7 +1979,7 @@ setMode("people");
   }
   function startDomains() {
     state = null; clearChips(); inputRow.style.display = "none";
-    botText("你好，我是飲水系統助理。回答幾個問題，我就用選型引擎幫你算出建議設備清單、健檢結果與風險提醒，最後可以下載建議書。\n先選這次要算哪一類：");
+    botText("你好，我是飲水系統助理。回答幾個問題，我就幫你算出建議設備清單、健檢結果與風險提醒，最後可以下載建議書。\n先選這次要算哪一類：");
     addChip("飲水機", "", function () { userSay("飲水機"); begin("dw"); });
     addChip("工程", "", function () { userSay("工程"); begin("eng"); });
     addChip("飲水台", "", function () { userSay("飲水台"); begin("fountain"); });
@@ -2012,7 +2014,7 @@ setMode("people");
     if (m.hint && !st.roBtn) q += '<span class="c-hint">' + esc(m.hint) + "</span>";
     if (el.tagName !== "SELECT" && el.value !== "") {
       q += '<span class="c-hint">' + (st.roBtn
-        ? "已帶入：" + esc(el.value) + " L/h（RO 級距回推）——不用改就按「就用這個」"
+        ? "已帶入：" + esc(el.value) + " L/h（依每日用量推算）——不用改就按「就用這個」"
         : "已帶入目前值：" + esc(el.value) + "——不用改就按「就用這個」") + "</span>";
     }
     botSay(q);
@@ -2025,17 +2027,22 @@ setMode("people");
         });
       });
     } else {
-      inputEl.type = el.type === "date" ? "date" : (el.type === "number" ? "number" : "text");
+      inputEl.type = el.type === "date" ? "date" : "text";
+      inputEl.inputMode = el.type === "number" ? "decimal" : "";
       if (el.step) inputEl.step = el.step; else inputEl.removeAttribute("step");
       inputEl.placeholder = el.placeholder || ("目前：" + el.value);
       inputEl.value = "";
       inputRow.style.display = "flex";
       sendBtn.onclick = function () {
         var v = inputEl.value.trim();
+        if (el.type === "number") {
+          /* forgive common formats: full-width digits, commas, spaces */
+          v = v.replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/．/g, ".").replace(/[,，\s]/g, "");
+        }
         if (v === "") { noteFail(el.value !== "" ? "這一欄還沒填，請輸入，或按下方「就用這個」。" : "這一欄還沒填，請輸入。"); return; }
         if (el.type === "number") {
-          var nv = parseFloat(v);
-          if (isNaN(nv)) { noteFail("這一欄需要數字，請重新輸入。"); return; }
+          var nv = Number(v);
+          if (isNaN(nv)) { noteFail("這一欄需要數字，請重新輸入（用半形數字，不要加其他符號）。"); return; }
           if (el.min !== "" && nv < parseFloat(el.min)) { noteFail("低於最小值 " + el.min + "，請重新輸入。"); return; }
           if (el.max !== "" && nv > parseFloat(el.max)) { noteFail("高於最大值 " + el.max + "，請重新輸入。"); return; }
         }
@@ -2218,7 +2225,7 @@ setMode("people");
     function copyFullProposal() {
       var text = "";
       try { text = String(proposalText()); } catch (e) { text = ""; }
-      if (!text) { botText("全文產生失敗，請改用下面的「複製會議摘要」。"); return; }
+      if (!text) { botText("全文產生失敗，請改用下面的「複製摘要」。"); return; }
       function done() { botText("完整建議書已複製（全文 " + text.length + " 字），貼到筆記、信箱或聊天室就能保存。"); }
       function fallback() {
         var ta = document.createElement("textarea");
@@ -2235,16 +2242,16 @@ setMode("people");
     }
     addChip("看重點報告", "primary", function () { openReport(); });
     if (inLineEnv()) {
-      botText("以上是引擎算出的結果。「看重點報告」是設計版的一頁重點；LINE 裡不能下載檔案，完整版改用「複製完整建議書」帶走；想改條件，用「修改上一步」往回修。");
+      botText("以上是計算結果。「看重點報告」是重點整理（一頁看完）；LINE 裡不能下載檔案，完整版請用「複製完整建議書」帶走；想改條件，用「修改上一步」往回改。");
       addChip("複製完整建議書", "", copyFullProposal);
     } else {
-      botText("以上是引擎算出的結果。「看重點報告」是設計版的一頁重點，完整版可以下載 .txt 帶著走；想改條件，用「修改上一步」往回修。");
+      botText("以上是計算結果。「看重點報告」是重點整理（一頁看完），完整版可以下載 .txt 帶著走；想改條件，用「修改上一步」往回改。");
       addChip("下載完整建議書（.txt）", "", function () {
         G("btnDownload").click(); /* original download handler */
         setTimeout(function () { botText(T("toast") || "建議書已下載"); }, 300);
       });
     }
-    addChip("複製會議摘要", "", function () {
+    addChip("複製摘要", "", function () {
       G("btnCopy").click(); /* original copy handler */
       setTimeout(function () { botText(T("toast") || "已複製"); }, 400);
     });
@@ -2304,7 +2311,7 @@ setMode("people");
       document.body.appendChild(ta); ta.select();
       var ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
       document.body.removeChild(ta);
-      if (ok) done(); else { btn.textContent = "複製失敗，請回對話用複製會議摘要"; setTimeout(function () { btn.textContent = "複製重點摘要"; }, 2000); }
+      if (ok) done(); else { btn.textContent = "複製失敗，請回對話用複製摘要"; setTimeout(function () { btn.textContent = "複製重點摘要"; }, 2000); }
     }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
     else fallback();
