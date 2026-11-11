@@ -2019,7 +2019,7 @@ setMode("people");
       inputRow.style.display = "flex";
       sendBtn.onclick = function () {
         var v = inputEl.value.trim();
-        if (v === "") { botText("這一欄還沒填，請輸入，或用下方按鈕沿用預設值。"); return; }
+        if (v === "") { botText(st.required ? "這一欄還沒填，請輸入數字。" : "這一欄還沒填，請輸入，或用下方按鈕沿用預設值。"); return; }
         if (el.type === "number") {
           var nv = parseFloat(v);
           if (isNaN(nv)) { botText("這一欄需要數字，請重新輸入。"); return; }
@@ -2030,7 +2030,7 @@ setMode("people");
         advance(v);
       };
       inputEl.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); sendBtn.onclick(); } };
-      if (st.def && el.value !== "") addChip("用預設值（目前：" + el.value + "）", "primary", function () { advance("用預設值（" + el.value + "）"); });
+      if ((st.def || !st.required) && el.value !== "") addChip("用預設值（目前：" + el.value + "）", "primary", function () { advance("用預設值（" + el.value + "）"); });
       if (st.skip) addChip("略過", "", function () { advance("（略過）"); });
       if (st.roBtn) addChip("以 RO 級距帶入", "", function () {
         G("w_fromro").click(); /* original button: fills w_host from the RO tier table */
