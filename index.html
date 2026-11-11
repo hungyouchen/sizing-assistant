@@ -1,0 +1,2195 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>選型助理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg:#eef3f2; --surface:#ffffff; --surface-2:#f6f9f8; --ink:#13211f; --ink-2:#45554f;
+        --line:#d7e0dc; --accent:#0b6e63; --accent-ink:#ffffff; --accent-soft:#e0f0ec;
+        --warn:#9a6206; --warn-bg:#fdf3dd; --bad:#b3261e; --bad-bg:#fdecea;
+        --ok:#0b6e63; --ok-bg:#e0f0ec; --mono:"IBM Plex Mono",ui-monospace,monospace;
+        --shadow:0 1px 2px rgba(19,33,31,.05),0 8px 24px rgba(19,33,31,.06);
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#0d1514; --surface:#16211f; --surface-2:#1a2724; --ink:#e8f0ed; --ink-2:#a9bbb4;
+          --line:#2a3a36; --accent:#2cb39f; --accent-ink:#06231f; --accent-soft:#123832;
+          --warn:#e3aa4e; --warn-bg:#33270f; --bad:#f08a80; --bad-bg:#3a1a17;
+          --ok:#2cb39f; --ok-bg:#123832;
+          --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+        }
+      }
+      *{box-sizing:border-box}
+      body{margin:0;background:var(--bg);color:var(--ink);
+        font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+        line-height:1.65;-webkit-font-smoothing:antialiased}
+      .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 56px}
+      h1{font-size:clamp(26px,4.5vw,38px);line-height:1.25;margin:0 0 8px;font-weight:900;letter-spacing:.01em}
+      .lead{color:var(--ink-2);font-size:16px;margin:0 0 6px;max-width:48em}
+      .lead strong{color:var(--ink)}
+      .howto{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 22px}
+      .step{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);
+        border-radius:999px;padding:6px 14px 6px 7px;font-size:13.5px;font-weight:500}
+      .step b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;
+        background:var(--accent);color:var(--accent-ink);font-size:12.5px;font-family:var(--mono)}
+      .presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 20px}
+      .presets span{font-size:13px;color:var(--ink-2);font-weight:700;margin-right:2px}
+      .chip{border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:999px;
+        padding:7px 14px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+      .chip:hover{background:var(--accent-soft)}
+      .grid{display:grid;grid-template-columns:372px 1fr;gap:20px;align-items:start}
+      @media (max-width:920px){.grid{grid-template-columns:1fr}}
+      .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px}
+      .card h2{font-size:17px;margin:0 0 4px;font-weight:900}
+      .card .sub{font-size:13px;color:var(--ink-2);margin:0 0 14px}
+      form.card{position:sticky;top:16px}
+      @media (max-width:920px){form.card{position:static}}
+      .group{border-top:1px solid var(--line);padding:14px 0 4px;margin-top:14px}
+      .group:first-of-type{border-top:none;margin-top:2px;padding-top:2px}
+      .group h3{font-size:13px;margin:0 0 10px;color:var(--accent);font-weight:900;letter-spacing:.06em}
+      label{display:block;font-size:13.5px;font-weight:700;margin:0 0 10px}
+      label .hint{display:block;font-weight:400;color:var(--ink-2);font-size:12.5px;margin-top:1px}
+      input,select{width:100%;margin-top:4px;padding:9px 11px;font-size:15px;font-family:inherit;color:var(--ink);
+        background:var(--surface-2);border:1px solid var(--line);border-radius:9px}
+      input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+      .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+      .results{display:flex;flex-direction:column;gap:20px;min-width:0}
+      .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+      @media (max-width:560px){.metrics{grid-template-columns:1fr}}
+      .metric{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+      .metric .k{font-size:12.5px;color:var(--ink-2);font-weight:700}
+      .metric .v{font-family:var(--mono);font-size:27px;font-weight:600;line-height:1.3;margin:2px 0}
+      .metric .v small{font-size:14px;color:var(--ink-2)}
+      .metric .f{font-size:12.5px;color:var(--ink-2)}
+      .health{list-style:none;margin:6px 0 0;padding:0}
+      .health li{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+      .health li:first-child{border-top:none}
+      .dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:8px}
+      .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)} .dot.unk{background:var(--ink-2)}
+      .health .t{font-weight:700;font-size:14.5px}
+      .health .t .tag{font-size:11.5px;font-weight:900;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+      .tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.warn{background:var(--warn-bg);color:var(--warn)} .tag.bad{background:var(--bad-bg);color:var(--bad)} .tag.unk{background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+      .health .d{font-size:13.5px;color:var(--ink-2)}
+      table{width:100%;border-collapse:collapse;font-size:14px}
+      th{ text-align:left;font-size:12.5px;color:var(--ink-2);padding:8px 8px;border-bottom:2px solid var(--line)}
+      td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+      td.num,th.num{text-align:right;font-family:var(--mono);white-space:nowrap}
+      .item-name{font-weight:700}
+      .item-spec{color:var(--ink-2);font-size:13px}
+      tfoot td{border-bottom:none;font-weight:900;font-size:15px}
+      .layer-head td{background:var(--surface-2);font-weight:900;font-size:13px;color:var(--accent);border-bottom:1px solid var(--line)}
+      @media (max-width:640px){
+        table,thead,tbody,tr,td{display:block}
+        thead{display:none}
+        tr{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+        .layer-head{border:none;padding:0;margin-bottom:6px} .layer-head td{padding:6px 10px;border-radius:8px}
+        td{border-bottom:none;padding:2px 0}
+        td.num{text-align:left}
+        tfoot tr{border:none;padding:0} tfoot td{font-size:16px}
+      }
+      .notes{list-style:none;margin:4px 0 0;padding:0}
+      .notes li{padding:8px 0 8px 20px;position:relative;font-size:14.5px;border-top:1px solid var(--line)}
+      .notes li:first-child{border-top:none}
+      .notes li::before{content:"";position:absolute;left:2px;top:17px;width:7px;height:7px;border-radius:2px;background:var(--accent)}
+      .actions{display:flex;flex-wrap:wrap;gap:10px}
+      .btn{border-radius:10px;padding:12px 20px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;border:1px solid var(--accent)}
+      .btn.primary{background:var(--accent);color:var(--accent-ink)}
+      .btn.ghost{background:transparent;color:var(--accent)}
+      .btn:active{transform:translateY(1px)}
+      .toast{font-size:13.5px;color:var(--accent);font-weight:700;align-self:center}
+      .seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px;margin-bottom:4px}
+      .seg-btn{flex:1;border:none;background:transparent;color:var(--ink-2);border-radius:8px;padding:9px 6px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit}
+      .seg-btn.active{background:var(--accent);color:var(--accent-ink)}
+      .hidden{display:none !important}
+      .dw-conclusion{font-size:19px;font-weight:900;line-height:1.5;margin:2px 0 12px}
+      .checks{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+      details.check,details.hcheck{border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:10px 14px}
+      details.check summary,details.hcheck summary{cursor:pointer;font-weight:700;font-size:14.5px;list-style-position:outside}
+      details.check .calc,details.hcheck .calc{font-size:13.5px;color:var(--ink-2);margin-top:8px;white-space:pre-line}
+      details.hcheck{margin-top:8px}
+      details.adv{border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin-top:12px;background:var(--surface-2)}
+      details.adv summary{cursor:pointer;font-weight:900;font-size:14px;color:var(--accent)}
+      details.adv .adv-body{margin-top:10px}
+      .health li details.hcheck{flex:1}
+      .ratio-warn{font-size:12.5px;color:var(--bad);font-weight:700;display:none}
+      .foot{font-size:12.5px;color:var(--ink-2);margin-top:14px}
+      .budget-line{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;margin-top:6px}
+      .budget-line b{font-family:var(--mono)}
+      .stag{display:inline-block;font-size:11px;font-weight:900;padding:0 7px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface);vertical-align:2px;margin-left:5px;white-space:nowrap}
+      .stag.sys{color:var(--accent);border-color:var(--accent)}
+      .banner{border-radius:12px;padding:13px 16px;font-size:14.5px;font-weight:700;border:1px solid var(--line);background:var(--surface-2)}
+      .banner.ok{background:var(--ok-bg);color:var(--ink);border-color:var(--accent)}
+      .banner.warn{background:var(--warn-bg);color:var(--ink)}
+      .banner.bad{background:var(--bad-bg);color:var(--ink)}
+      .banner .small{font-weight:400;font-size:13px;color:var(--ink-2);display:block;margin-top:2px}
+      .screen-table td:first-child{font-weight:700;white-space:nowrap}
+      @media print{
+        form.card,.actions,.presets,.howto{display:none}
+        body{background:#fff} .wrap{padding:0}
+        .grid{grid-template-columns:1fr} .card{box-shadow:none;border:none;padding:10px 0}
+      }
+    </style>
+      <style>
+/* ===== chat layer styles (added; original page styles unchanged above) ===== */
+body{background:var(--bg)}
+.c-app{max-width:760px;margin:0 auto;padding:0 0 40px;display:flex;flex-direction:column;min-height:100dvh}
+.c-head{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:14px 18px;display:flex;align-items:center;gap:10px}
+.c-head .c-logo{width:34px;height:34px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;flex:none}
+.c-head h1{font-size:19px;margin:0;font-weight:900}
+.c-head .c-sub{font-size:12.5px;color:var(--ink-2)}
+.c-msgs{flex:1;padding:18px 14px 8px;display:flex;flex-direction:column;gap:10px}
+.c-msg{max-width:88%;padding:11px 14px;border-radius:14px;font-size:15px;line-height:1.6;white-space:normal;word-break:break-word}
+.c-msg.bot{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start;box-shadow:var(--shadow)}
+.c-msg.user{background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px;align-self:flex-end}
+.c-msg .c-hint{display:block;font-size:12.5px;color:var(--ink-2);margin-top:4px;font-weight:400}
+.c-msg pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13.5px;margin:6px 0;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.c-msg details{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0;background:var(--surface-2)}
+.c-msg details summary{cursor:pointer;font-weight:700;font-size:14px}
+.c-msg details pre{border:none;background:transparent;padding:6px 0 0;margin:0}
+.c-msg .c-sec{font-weight:900;margin:10px 0 2px}
+.c-msg .c-sec:first-child{margin-top:0}
+.c-chips{padding:6px 14px 4px;display:flex;flex-wrap:wrap;gap:8px}
+.c-chip{border:1px solid var(--accent);color:var(--accent);background:var(--surface);border-radius:999px;padding:9px 16px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.c-chip:hover{background:var(--accent-soft)}
+.c-chip.util{border-color:var(--line);color:var(--ink-2);font-weight:500}
+.c-chip.primary{background:var(--accent);color:var(--accent-ink)}
+.c-inputrow{padding:8px 14px 16px;display:flex;gap:8px;align-items:stretch}
+.c-inputrow input{flex:1;margin:0;padding:12px 14px;font-size:16px}
+.c-inputrow button{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:0 22px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit}
+.c-group{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:8px}
+.c-group label{display:block;font-size:13.5px;font-weight:700;margin:0 0 10px}
+.c-group label .hint{display:block;font-weight:400;color:var(--ink-2);font-size:12.5px;margin-top:1px}
+.c-group input,.c-group select{width:100%;margin-top:4px}
+.c-group .c-grow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.c-group .c-grow{grid-template-columns:1fr}}
+.c-gbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+    </style>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+  <body>
+        <div class="c-app" id="c_app">
+      <div class="c-head">
+        <div class="c-logo">選</div>
+        <div>
+          <h1>選型助理</h1>
+          <div class="c-sub">對話式選型：回答問題，其餘交給選型引擎計算</div>
+        </div>
+      </div>
+      <div class="c-msgs" id="c_msgs"></div>
+      <div class="c-chips" id="c_chips"></div>
+      <div class="c-inputrow" id="c_inputrow" style="display:none">
+        <input id="c_input" type="text" autocomplete="off" />
+        <button type="button" id="c_send">送出</button>
+      </div>
+    </div>
+
+    <div id="engineRoot" style="display:none" aria-hidden="true">
+<main class="wrap">
+      <h1>案場選型健檢與建議書產生器</h1>
+      <p class="lead">三種問法、一份結論：<strong>人數模式</strong>把「平常幾個人、最多多少人」換算成用水量；<strong>工程模式</strong>直接填公升做產水、儲水、揚程與 RO 適用性計算；<strong>飲水機模式</strong>專算飲水機與飲水台——看的是「最忙的那一段時間夠不夠」。建議書只給一個<strong>採用設計結論</strong>（以你目前所在模式為準），其他模式的數字列為交叉檢核值；每個關鍵數字都標示來源狀態（實際輸入／系統換算／預設假設／初步建議／待確認）。</p>
+      <div class="howto" aria-label="使用步驟">
+        <span class="step"><b>1</b>先填快速輸入（進階現勘可展開補）</span>
+        <span class="step"><b>2</b>看健檢結果與選型計算</span>
+        <span class="step"><b>3</b>下載建議書帶去開會</span>
+      </div>
+
+      <div class="presets" id="topPresets">
+        <span>範例案場：</span>
+        <button class="chip" type="button" data-preset="fab">電子廠高純水 · 24h 連續</button>
+        <button class="chip" type="button" data-preset="food">食品廠製程水 · 日間尖峰</button>
+        <button class="chip" type="button" data-preset="clinic">醫療院所純水 · 迴水殺菌</button>
+        <button class="chip" type="button" data-preset="well">地下水源場域 · 高硬度高鐵</button>
+      </div>
+
+      <div class="grid">
+        <form class="card" id="caseForm">
+          <h2>案場條件</h2>
+          <p class="sub">改任何一欄，右邊的健檢、選型與建議書即時重算。欄位留空不會當 0 計算，會顯示「待輸入」並讓結果區進入未完成狀態。</p>
+          <div class="seg" role="group" aria-label="模式切換">
+            <button type="button" id="modePeople" class="seg-btn active">人數模式</button>
+            <button type="button" id="modeEng" class="seg-btn">工程模式</button>
+            <button type="button" id="modeDw" class="seg-btn">飲水機模式</button>
+          </div>
+
+          <div class="group">
+            <h3>基本資料</h3>
+            <label>案場名稱
+              <input id="f_name" type="text" value="範例案場" />
+            </label>
+            <label>提案單位
+              <input id="f_proposer" type="text" value="" placeholder="（選填，自行輸入）" />
+            </label>
+            <div class="row2">
+              <label>業態
+                <select id="f_industry">
+                  <option value="fab">電子／半導體</option>
+                  <option value="food">食品／飲料</option>
+                  <option value="clinic">醫療院所</option>
+                  <option value="building">商辦／大樓飲水</option>
+                  <option value="process" selected>一般工業製程</option>
+                </select>
+              </label>
+              <label>原水來源
+                <select id="f_source">
+                  <option value="tap" selected>自來水</option>
+                  <option value="well">地下水／井水</option>
+                  <option value="recycle">回收水</option>
+                  <option value="unknown">來源不明</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="group" id="groupPeople">
+            <h3>人數模式（客戶的問法）</h3>
+            <div class="row2">
+              <label>平常人數（人）
+                <input id="p_normal" type="number" min="1" step="1" value="60" />
+              </label>
+              <label>尖峰人數（最多，人）
+                <input id="p_peak" type="number" min="1" step="1" value="85" />
+              </label>
+            </div>
+            <div class="row2">
+              <label>取水點／茶水間（處）
+                <input id="p_points" type="number" min="1" step="1" value="2" />
+                <span class="hint">台數不得少於取水點數量</span>
+              </label>
+              <label>每日使用時段（小時・可調）
+                <input id="p_hours" type="number" min="1" max="24" step="1" value="10" />
+                <span class="hint">大於 0、不超過 24；產水速率回推用</span>
+              </label>
+            </div>
+            <label>人均日量情境
+              <select id="p_scenario">
+                <option value="1.2" selected>純辦公室 1.2 L／人・日</option>
+                <option value="1.5">輕微活動 1.5 L／人・日</option>
+                <option value="2.0">高溫・勞力 2.0 L／人・日</option>
+                <option value="2.5">高溫・勞力（高）2.5 L／人・日</option>
+              </select>
+              <span class="hint">此為辦公在席情境；與飲水機模式的 2.0 L 不同——飲水機模式以全日含訪客、補水壺的情境估算，所以基準較高。</span>
+            </label>
+            <div class="row2">
+              <label>每人每日飲水量（L／人・可手調）
+                <input id="p_perday" type="number" min="0.1" step="0.1" value="1.2" />
+              </label>
+              <label>尖峰單次取水量（L／人・可調）
+                <input id="p_burstqty" type="number" min="0.1" step="0.05" value="0.35" />
+                <span class="hint">預設 0.35（約一杯 350 mL）</span>
+              </label>
+            </div>
+            <div class="row2">
+              <label>尖峰集中時間
+                <select id="p_burstsel">
+                  <option value="15">15 分鐘</option>
+                  <option value="30" selected>30 分鐘</option>
+                  <option value="60">60 分鐘</option>
+                  <option value="custom">自訂</option>
+                </select>
+                <span class="hint">建議書中註明為假設值</span>
+              </label>
+              <label>尖峰集中時間（分鐘・自訂時用）
+                <input id="p_burstmin" type="number" min="5" step="5" value="30" />
+              </label>
+            </div>
+            <label>單次取水時間（秒／杯・可調）
+              <input id="p_serve" type="number" min="5" step="5" value="20" />
+              <span class="hint">預設約 20 秒，用於尖峰等候估算</span>
+            </label>
+            <div class="presets" style="margin:6px 0 2px">
+              <span>人數範例：</span>
+              <button class="chip" type="button" data-ppreset="office">辦公室 60 人 · 2 處茶水間</button>
+              <button class="chip" type="button" data-ppreset="plant">廠辦 300 人 · 4 處茶水間</button>
+            </div>
+            <p class="sub" style="margin:8px 0 0">型式分級假設（依實際機型可再調整）：桌上型 ≤25 人／台、尖峰出水 25 LPH／台；落地型 ≤60 人／台、50 LPH／台；大容量型 ≤150 人／台、110 LPH／台。台數先滿足取水點與每台服務人數，再校核尖峰出水能力，不足就加台。回歸基準：60 人辦公室 × 1.2 L ＝ 日量 72 L／日。</p>
+          </div>
+
+          <div class="group hidden" id="groupDw">
+            <h3>第一步・分流（三個選擇題）</h3>
+            <label>地點（縣市）
+              <select id="d_city">
+                <option value="臺北市" selected>臺北市</option>
+                <option value="新北市">新北市</option>
+                <option value="基隆市">基隆市</option>
+                <option value="桃園市">桃園市</option>
+                <option value="新竹縣">新竹縣</option>
+                <option value="新竹市">新竹市</option>
+                <option value="苗栗縣">苗栗縣</option>
+                <option value="臺中市">臺中市</option>
+                <option value="彰化縣">彰化縣</option>
+                <option value="南投縣">南投縣</option>
+                <option value="雲林縣">雲林縣</option>
+                <option value="嘉義縣">嘉義縣</option>
+                <option value="嘉義市">嘉義市</option>
+                <option value="臺南市">臺南市</option>
+                <option value="高雄市">高雄市</option>
+                <option value="屏東縣">屏東縣</option>
+                <option value="宜蘭縣">宜蘭縣</option>
+                <option value="花蓮縣">花蓮縣</option>
+                <option value="臺東縣">臺東縣</option>
+                <option value="澎湖縣">澎湖縣</option>
+                <option value="金門縣">金門縣</option>
+                <option value="連江縣">連江縣</option>
+              </select>
+            </label>
+            <label>水質路線（依地點預設，可手動改）
+              <select id="d_route">
+                <option value="general">一般過濾</option>
+                <option value="ro">RO 逆滲透</option>
+                <option value="roIsland">RO 逆滲透（離島水源特殊，建議加強前置）</option>
+              </select>
+              <span class="hint" id="d_route_hint">—</span>
+              <span class="hint">預設依地區水質概況，實際以現場水質為準。判斷理由：雙北與宜花基自來水硬度較低、一般過濾即可；中南部與離島硬度與 TDS 較高，建議 RO 減少水垢、保護加熱製冷系統。</span>
+            </label>
+            <label>場域
+              <select id="d_venue">
+                <option value="office" selected>辦公室</option>
+                <option value="factory">工廠・倉庫</option>
+                <option value="school">學校・機關</option>
+                <option value="outdoor">戶外・半戶外</option>
+              </select>
+              <span class="hint">場域會帶入尖峰比例、尖峰分鐘與溫型比例預設，可再手調</span>
+            </label>
+            <label>預定機型
+              <select id="d_type">
+                <option value="auto" selected>自動建議（依場域與人數）</option>
+                <option value="floor">落地三溫全煮型（一般級）</option>
+                <option value="floorXL">落地三溫全煮型（機關大流量級）</option>
+                <option value="direct">生飲型</option>
+                <option value="under">廚下型</option>
+                <option value="fountain">飲水台（多口連續出水）</option>
+              </select>
+              <span class="hint" id="d_type_hint">—</span>
+            </label>
+            <h3 style="margin-top:16px">第二步・用量輸入</h3>
+            <div class="row2">
+              <label>使用人數（人）
+                <input id="d_users" type="number" min="1" step="1" value="50" />
+              </label>
+              <label>茶水間數量（間）
+                <input id="d_rooms" type="number" min="1" step="1" value="1" />
+                <span class="hint">每間至少 1 台（飲水台模式不適用）</span>
+              </label>
+            </div>
+            <div class="row2">
+              <label>尖峰人次（人次）
+                <input id="d_peakpeople" type="number" min="1" step="1" value="15" />
+                <span class="hint" id="d_peak_hint">預設依場域比例帶入，可直接改人次</span>
+              </label>
+              <label>尖峰時段長度（分鐘）
+                <input id="d_peakmin" type="number" min="5" step="5" value="30" />
+              </label>
+            </div>
+            <div class="row2">
+              <label>每人每日飲水量（L・可調）
+                <input id="d_perday" type="number" min="0.5" step="0.1" value="2.0" />
+                <span class="hint">預設 2.0 公升（全日含訪客情境）</span>
+              </label>
+              <label>尖峰每人取水量（L・可調）
+                <input id="d_peakqty" type="number" min="0.1" step="0.05" value="0.5" />
+                <span class="hint">預設 0.5（飲水台子模組另以 0.35 計）</span>
+              </label>
+            </div>
+            <label>溫型需求比例（%・合計須 100，模型推估，可調整）</label>
+            <div class="row3">
+              <label style="margin:0">熱水 %
+                <input id="d_rhot" type="number" min="0" max="100" step="5" value="60" />
+              </label>
+              <label style="margin:0">溫水 %
+                <input id="d_rwarm" type="number" min="0" max="100" step="5" value="25" />
+              </label>
+              <label style="margin:0">冰水 %
+                <input id="d_rice" type="number" min="0" max="100" step="5" value="15" />
+              </label>
+            </div>
+            <p class="ratio-warn" id="d_ratio_warn">溫型比例合計不是 100%，計算將依比例正規化後拆分，請盡量調回 100%。</p>
+            <div class="row2" style="margin-top:10px">
+              <label>電源條件
+                <select id="d_power">
+                  <option value="v220">可提供 220V</option>
+                  <option value="v110" selected>僅 110V</option>
+                  <option value="unknown">不確定（以 110V 計算，標暫估）</option>
+                </select>
+                <span class="hint">不確定時以 110V 計算並標「暫估，未完成電源確認」</span>
+              </label>
+              <label>RO 日量檢核・有效運轉時數（小時）
+                <input id="d_effhours" type="number" min="1" max="24" step="1" value="8" />
+                <span class="hint">預設 8 小時；大於 0、不超過 24</span>
+              </label>
+            </div>
+            <details class="adv">
+              <summary>進階現勘（水壓／排水／空間／迴路／停機／尖峰間隔）</summary>
+              <div class="adv-body">
+                <div class="row2">
+                  <label>現場水壓狀態
+                    <select id="d_pressure">
+                      <option value="normal">正常</option>
+                      <option value="low">偏低</option>
+                      <option value="high">偏高</option>
+                      <option value="unknown" selected>未確認</option>
+                    </select>
+                  </label>
+                  <label>排水孔或地漏
+                    <select id="d_drain">
+                      <option value="yes">有</option>
+                      <option value="no">無</option>
+                      <option value="unknown" selected>未確認</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="row2">
+                  <label>安裝空間與散熱
+                    <select id="d_space">
+                      <option value="ok">足夠</option>
+                      <option value="tight">受限</option>
+                      <option value="unknown" selected>未確認</option>
+                    </select>
+                  </label>
+                  <label>尖峰間隔（分鐘）
+                    <input id="d_interval" type="number" min="5" step="5" value="40" />
+                    <span class="hint">預設 40，恢復檢核對照用</span>
+                  </label>
+                </div>
+                <div class="row2">
+                  <label>同迴路有其他大電流設備
+                    <select id="d_bigload">
+                      <option value="no">否</option>
+                      <option value="yes">是</option>
+                      <option value="unknown" selected>未確認</option>
+                    </select>
+                  </label>
+                  <label>假日長時間停機
+                    <select id="d_holiday">
+                      <option value="no">否</option>
+                      <option value="yes">是</option>
+                      <option value="unknown" selected>未確認</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </details>
+            <p class="sub" style="margin:10px 0 0">機型能力表（業界平均設計基準，非單一品牌保證規格）：落地三溫全煮型一般級——熱水 110V 10 L/h、220V 25 L/h，冰水 5 L/h，缸存量熱 14 L／溫 9 L／冰 3 L；機關大流量級——熱水 110V 30 L/h、220V 45 L/h，冰水 17 L/h（樣本較少，個案請核對型錄）；生飲型——熱水 110V 10／220V 20 L/h（工程推估），冰水 5 L/h（推估），溫／冷直出 1.5 L/min；廚下型——熱水 8 L/h、熱缸 3.5 L，冰水 3 L/h（推估），冷水直出 1.5 L/min，單台服務 20 人為提醒值。RO 額定造水量級距：60 GPD＝227 L/day、100 GPD＝379 L/day、150 GPD＝568 L/day；額定值為 24 小時標準條件造水量，與飲水機本體供水能力分開。</p>
+          </div>
+
+          <div class="group hidden" id="groupFountain">
+            <h3>飲水台子模組（多口連續出水）</h3>
+            <p class="sub" style="margin:0 0 10px">使用人數、尖峰人次、尖峰分鐘沿用上方用量輸入（學校場域預設尖峰 60%、10 分鐘）。</p>
+            <div class="row2">
+              <label>每人次取水量（L）
+                <input id="w_pervisit" type="number" min="0.05" step="0.05" value="0.35" />
+              </label>
+              <label>每口流量（L/min）
+                <select id="w_flow">
+                  <option value="5" selected>5.0（裝水口・一般）</option>
+                  <option value="4.2">4.2（製冷型）</option>
+                  <option value="5.7">5.7（非製冷型）</option>
+                  <option value="3.8">3.8（機械式）</option>
+                </select>
+              </label>
+            </div>
+            <div class="row2">
+              <label>換人時間（秒）
+                <input id="w_change" type="number" min="0" step="1" value="8" />
+              </label>
+              <label>主機製水量（L/h）
+                <input id="w_host" type="number" min="1" step="10" value="300" />
+                <span class="hint">可由 RO 級距帶入：點下方按鈕以日量回推</span>
+              </label>
+            </div>
+            <div class="row2">
+              <label>主管管徑
+                <select id="w_pipe">
+                  <option value="0.5">1/2"</option>
+                  <option value="0.75">3/4"</option>
+                  <option value="1" selected>1"</option>
+                  <option value="1.25">1-1/4"</option>
+                </select>
+                <span class="hint">判定以流速 1.0 m/s 下限值從嚴；正式設計須做壓降計算</span>
+              </label>
+              <label>每日用量（L・可改）
+                <input id="w_daily" type="number" min="1" step="10" value="1200" />
+                <span class="hint">預設＝使用人數 × 2.0 L，改人數會同步（手改後以手改為準）</span>
+              </label>
+            </div>
+            <label>飲水台型式
+              <select id="w_chill">
+                <option value="no" selected>非製冷型</option>
+                <option value="yes">製冷型（另列製冷能力參考）</option>
+              </select>
+            </label>
+            <button class="chip" type="button" id="w_fromro">以 RO 級距帶入主機製水量</button>
+          </div>
+
+          <div class="group shared-group">
+            <h3>用水需求（工程）</h3>
+            <div class="eng-only">
+            <label>每日用水量（L／日）
+              <input id="f_daily" type="number" min="1" step="100" value="16000" />
+              <span class="hint">留空顯示待輸入，不以 0 計算</span>
+            </label>
+            </div>
+            <div class="row2 eng-only">
+              <label>每日運轉時數（有效運轉）
+                <select id="f_hours">
+                  <option value="8">8 小時</option>
+                  <option value="12">12 小時</option>
+                  <option value="16" selected>16 小時</option>
+                  <option value="24">24 小時</option>
+                </select>
+                <span class="hint">同樣日量，時數越短、瞬間需求越大</span>
+              </label>
+              <label>用水型態
+                <select id="f_pattern">
+                  <option value="steady" selected>平穩連續</option>
+                  <option value="peak">日間尖峰</option>
+                  <option value="burst">瞬間大量取水</option>
+                </select>
+                <span class="hint">型態決定尖峰用水速率（平穩 ×1.0／日間尖峰 ×1.8／瞬間大量 ×3.0，模型假設）</span>
+              </label>
+            </div>
+            <div class="row2">
+              <label>末端型態（必填）
+                <select id="f_terminal">
+                  <option value="dispenser" selected>飲水機（自帶內膽緩衝）</option>
+                  <option value="fountain">多口飲水台（無內部儲水、瞬時流量主導）</option>
+                  <option value="mixed">混合</option>
+                </select>
+                <span class="hint">飲水台末端殘壓以 20 m 計，飲水機以 15 m 計</span>
+              </label>
+              <label>尖峰持續時間（分鐘）
+                <input id="f_peakdur" type="number" min="5" step="5" value="60" />
+                <span class="hint">儲水公式的尖峰持續時間</span>
+              </label>
+            </div>
+            <label>目標水質
+              <select id="f_target">
+                <option value="process" selected>一般製程水（電導率 &lt;10 µS/cm）</option>
+                <option value="pure">純水（≥1 MΩ·cm）</option>
+                <option value="high">高純水（≥10 MΩ·cm）</option>
+                <option value="upw">超純水（≥17 MΩ·cm）</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="group shared-group">
+            <h3>原水水質（快速）</h3>
+            <div class="row2">
+              <label>原水 TDS（mg/L）
+                <input id="f_tds" type="number" min="0" step="10" value="240" />
+              </label>
+              <label>餘氯
+                <select id="f_chlorine">
+                  <option value="yes" selected>有（自來水常見）</option>
+                  <option value="no">無</option>
+                  <option value="unknown">未知／未檢測</option>
+                </select>
+              </label>
+            </div>
+            <details class="adv">
+              <summary>進階水質（可不填，未填顯示待確認）</summary>
+              <div class="adv-body">
+                <div class="row2">
+                  <label>硬度（mg/L，CaCO₃）
+                    <input id="f_hard" type="number" min="0" step="10" value="120" />
+                  </label>
+                  <label>含鐵（mg/L）
+                    <input id="f_iron" type="number" min="0" step="0.1" value="0.1" />
+                  </label>
+                </div>
+                <div class="row2">
+                  <label>SDI（淤泥密度指數）
+                    <input id="f_sdi" type="number" min="0" step="0.5" placeholder="待輸入" />
+                    <span class="hint">≤3 綠、3–5 黃、&gt;5 紅</span>
+                  </label>
+                  <label>鹼度（mg/L，CaCO₃）
+                    <input id="f_alk" type="number" min="0" step="10" placeholder="待輸入" />
+                  </label>
+                </div>
+                <div class="row2">
+                  <label>pH
+                    <input id="f_ph" type="number" min="0" max="14" step="0.1" placeholder="待輸入" />
+                  </label>
+                  <label>矽 SiO₂（mg/L）
+                    <input id="f_silica" type="number" min="0" step="1" placeholder="待輸入" />
+                  </label>
+                </div>
+                <div class="row2">
+                  <label>含錳（mg/L）
+                    <input id="f_mn" type="number" min="0" step="0.05" placeholder="待輸入" />
+                  </label>
+                  <label>濁度（NTU）
+                    <input id="f_turb" type="number" min="0" step="0.5" placeholder="待輸入" />
+                  </label>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <div class="group shared-group">
+            <h3>供水與備援</h3>
+            <div class="row2">
+              <label>供水樓高（樓層數）
+                <input id="f_floors" type="number" min="1" step="1" value="3" />
+              </label>
+              <label>每層樓高（m・可調）
+                <input id="f_floorh" type="number" min="2" step="0.1" value="3.5" />
+              </label>
+            </div>
+            <details class="adv">
+              <summary>進階揚程（管損估算，未輸入顯示揚程未完成）</summary>
+              <div class="adv-body">
+                <div class="row2">
+                  <label>管長（m）
+                    <input id="f_pipelen" type="number" min="0" step="5" placeholder="待輸入" />
+                  </label>
+                  <label>管徑（mm）
+                    <input id="f_pipedia" type="number" min="10" step="5" placeholder="待輸入" />
+                  </label>
+                </div>
+                <label>設備壓損（m・預設 5，可調）
+                  <input id="f_equiploss" type="number" min="0" step="1" value="5" />
+                </label>
+                <p class="sub" style="margin:4px 0 0">管損以簡式估算（以設計流量與管徑推估流速、單位管長損失率約估）；正式設計須逐段計算。NPSH 需另行核對、不併入揚程。</p>
+              </div>
+            </details>
+            <div class="row2" style="margin-top:10px">
+              <label>迴水循環殺菌需求
+                <select id="f_loop">
+                  <option value="no" selected>不需要</option>
+                  <option value="yes">需要（迴水＋UV）</option>
+                </select>
+              </label>
+              <label>備援等級
+                <select id="f_backup">
+                  <option value="none" selected>標準（單系統）</option>
+                  <option value="pump">供水雙泵備援</option>
+                  <option value="dual">關鍵案場（雙泵＋監控預警）</option>
+                </select>
+              </label>
+            </div>
+            <label>估價基準日
+              <input id="f_basedate" type="date" />
+              <span class="hint">預設當日；設備清單金額為展示估算區間</span>
+            </label>
+          </div>
+        </form>
+
+        <div class="results">
+          <div class="banner warn hidden" id="incompleteBanner">未完成：有關鍵欄位待輸入，暫不輸出定案數字。<span class="small" id="incompleteDetail"></span></div>
+          <div class="banner hidden" id="crossBanner"></div>
+
+          <section class="card hidden" id="peopleCard" aria-label="人數模式結論">
+            <h2>人數模式結論<span class="stag sys">採用設計結論（本模式）</span></h2>
+            <p class="sub">台數不得少於取水點數量，且每台服務人數與尖峰出水能力都要能消化尖峰速率，不足就加台；型式依每台負責的人數與尖峰量分級。</p>
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">建議飲水機台數</div>
+                <div class="v"><span id="pm_count">—</span> <small>台</small></div>
+                <div class="f" id="pm_count_f">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">每台型式建議</div>
+                <div class="v" style="font-family:inherit;font-size:24px;font-weight:900"><span id="pm_type">—</span></div>
+                <div class="f" id="pm_type_f">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">尖峰最多等候（最後一杯）</div>
+                <div class="v"><span id="pm_wait">—</span> <small>分鐘</small></div>
+                <div class="f" id="pm_wait_f">—</div>
+              </div>
+            </div>
+            <div class="budget-line">
+              <span>換算日用水量 <b id="pm_daily">—</b><span class="stag sys">系統換算</span></span>
+              <span>尖峰需求速率 <b id="pm_peakrate">—</b><span class="stag sys">系統換算</span></span>
+              <span>尖峰總取水量 <b id="pm_peakvol">—</b><span class="stag sys">系統換算</span></span>
+            </div>
+            <p class="sub" id="pm_note" style="margin:10px 0 0"></p>
+          </section>
+
+          <section class="card hidden" id="dwCard" aria-label="飲水機模式結論">
+            <h2>飲水機模式結論<span class="stag sys">採用設計結論（本模式）</span></h2>
+            <p class="sub">飲水機算「最忙的那一段時間夠不夠」：台數由存量＋回補、日量、分點檢核取最嚴格者決定；結果分容量與服務兩面呈現。</p>
+            <p class="dw-conclusion" id="dw_conclusion">—</p>
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">建議台數（最終）</div>
+                <div class="v"><span id="dw_count">—</span> <small>台</small></div>
+                <div class="f" id="dw_count_f">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">容量結果（瓶頸路）</div>
+                <div class="v" style="font-size:21px"><span id="dw_capres">—</span></div>
+                <div class="f" id="dw_capres_f">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">服務結果（尖峰消化估算）</div>
+                <div class="v"><span id="dw_wait">—</span> <small>分鐘</small></div>
+                <div class="f" id="dw_wait_f">—</div>
+              </div>
+            </div>
+            <div class="budget-line">
+              <span>日總量 <b id="dw_daily">—</b><span class="stag sys">系統換算</span></span>
+              <span>尖峰需求率 <b id="dw_peakrate">—</b><span class="stag sys">系統換算</span></span>
+              <span>每台平均服務 <b id="dw_per">—</b></span>
+              <span>RO 額定造水量級距 <b id="dw_tier">—</b><span class="stag">初步建議</span></span>
+              <span id="dw_ro_line">RO 回推產水 <b id="dw_ro">—</b></span>
+            </div>
+            <p class="sub" id="dw_bottleneck" style="margin:10px 0 0"></p>
+            <p class="sub" id="dw_recovery" style="margin:4px 0 0"></p>
+          </section>
+
+          <section class="card hidden" id="fountainCard" aria-label="飲水台子模組結論">
+            <h2>飲水台結論（多口連續出水）<span class="stag sys">採用設計結論（本模式）</span></h2>
+            <p class="sub">口數為理論最低口數，未含排隊變異；供給端以瞬間流量、水塔容量、補水速度三檢核把關。</p>
+            <p class="dw-conclusion" id="w_conclusion">—</p>
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">需要口數（理論最低）</div>
+                <div class="v"><span id="w_ports">—</span> <small>口</small></div>
+                <div class="f" id="w_ports_f">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">瞬間流量需求</div>
+                <div class="v"><span id="w_flowneed">—</span> <small>L/min</small></div>
+                <div class="f" id="w_flowneed_f">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">建議水塔／壓力桶容量</div>
+                <div class="v"><span id="w_tank">—</span> <small>L</small></div>
+                <div class="f" id="w_tank_f">—</div>
+              </div>
+            </div>
+            <div class="budget-line">
+              <span>每人占用 <b id="w_occ">—</b><span class="stag sys">系統換算</span></span>
+              <span>尖峰總出水量 <b id="w_peakvol">—</b></span>
+              <span>儲水缺口 <b id="w_gap">—</b><span class="stag sys">系統換算</span></span>
+              <span>間隔內補水 <b id="w_refill">—</b></span>
+            </div>
+            <p class="sub" id="w_feedback" style="margin:10px 0 0"></p>
+          </section>
+
+          <section class="card hidden" id="dwChecksCard" aria-label="飲水機檢核">
+            <h2 id="dwChecksTitle">檢核明細（點開看計算過程）</h2>
+            <p class="sub" id="dwChecksSub">最終台數 ＝ 各檢核最大值。</p>
+            <div class="checks" id="dwChecks"></div>
+          </section>
+
+          <section class="card" id="sizingCard" aria-label="選型計算">
+            <h2>選型計算<span class="stag sys" id="sizingAdoptTag">交叉檢核值</span></h2>
+            <p class="sub">產水量由需求回推：所需產水速率 ＝ 每日用水量 ÷ 有效運轉時數 × 1.20 容量預留係數（屬初期產水能力，未含膜衰減預留；不得再與儲水裕度重複相乘）。儲水需求 ＝（尖峰用水速率 − 產水速率）× 尖峰持續時間，差為負取 0。</p>
+            <div class="metrics">
+              <div class="metric">
+                <div class="k">所需產水速率（回推）</div>
+                <div class="v"><span id="m_required">—</span> <small>LPH</small></div>
+                <div class="f" id="m_required_f">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">建議 RO 主機規格</div>
+                <div class="v"><span id="m_ro">—</span> <small>LPH</small></div>
+                <div class="f" id="m_ro_f">—</div>
+              </div>
+              <div class="metric">
+                <div class="k">建議儲水容量</div>
+                <div class="v"><span id="m_tank">—</span> <small>L</small></div>
+                <div class="f" id="m_tank_f">—</div>
+              </div>
+            </div>
+            <div class="budget-line">
+              <span>初篩回收率 <b id="m_recovery">—</b></span>
+              <span>濃縮倍數 CF <b id="m_cf">—</b></span>
+              <span>每日進水量約 <b id="m_feed">—</b></span>
+              <span>每日濃水排放約 <b id="m_conc">—</b></span>
+            </div>
+            <div class="budget-line">
+              <span>總揚程 <b id="m_head">—</b></span>
+              <span style="font-size:13px;color:var(--ink-2)" id="m_head_f">—</span>
+            </div>
+            <h3 style="font-size:14px;margin:18px 0 6px">回收率初篩表（依進水 TDS）</h3>
+            <table class="screen-table">
+              <tbody>
+                <tr><td>TDS ≤ 300</td><td>初篩回收率 70%</td></tr>
+                <tr><td>TDS 301–600</td><td>初篩回收率 65%</td></tr>
+                <tr><td>TDS 601–1,000</td><td>初篩回收率 60%</td></tr>
+                <tr><td>TDS &gt; 1,000</td><td>需工程審查，不自動給定</td></tr>
+                <tr><td>地下水／回收水／來源不明</td><td>不自動給定</td></tr>
+              </tbody>
+            </table>
+            <p class="sub" style="margin:8px 0 0">初篩建議，正式回收率須以完整水質（硬度、鹼度、pH、矽、SDI）確認。濃水量 ＝ 產水量 ×（1 − 回收率）÷ 回收率；日濃水量 ＝ 濃水量（L/h）× 運轉時數。</p>
+            <div id="engFountainNote"></div>
+          </section>
+
+          <section class="card" aria-label="健檢結果">
+            <h2 id="healthTitle">健檢結果</h2>
+            <p class="sub" id="healthSub">每一項都對應一個設計動作；進階欄位未填的項目顯示「待確認」，不臆測。</p>
+            <ul class="health" id="healthList"></ul>
+          </section>
+
+          <section class="card" aria-label="建議設備清單">
+            <h2>建議設備清單</h2>
+            <p class="sub" id="bomSub">依計算結果組成，不是湊品項。</p>
+            <table>
+              <thead id="bomHead">
+                <tr><th>項次／設備</th><th>數量</th><th class="num">金額</th></tr>
+              </thead>
+              <tbody id="bomBody"></tbody>
+              <tfoot id="bomFoot">
+                <tr><td colspan="2">合計</td><td class="num" id="bomTotal">—</td></tr>
+              </tfoot>
+            </table>
+            <p class="sub" id="bomNote" style="margin:10px 0 0"></p>
+          </section>
+
+          <section class="card hidden" id="unconfirmedCard" aria-label="未確認資料">
+            <h2>未確認資料</h2>
+            <p class="sub" style="margin-bottom:6px">下列項目尚未確認，本案結果標示為「初步建議，未完成現勘確認」：</p>
+            <ul class="notes" id="unconfirmedList"></ul>
+          </section>
+
+          <section class="card" aria-label="風險與下一步">
+            <h2>風險提醒與進場前必辦</h2>
+            <ul class="notes" id="riskList"></ul>
+          </section>
+
+          <section class="card" aria-label="輸出">
+            <h2>帶著走</h2>
+            <p class="sub">建議書含採用設計結論、交叉檢核值、案場條件、計算依據、健檢結果、設備清單與未確認資料，純文字檔，任何裝置都能開。</p>
+            <div class="actions">
+              <button class="btn primary" type="button" id="btnDownload">下載建議書（.txt）</button>
+              <button class="btn ghost" type="button" id="btnCopy">複製會議摘要</button>
+              <span class="toast" id="toast" role="status"></span>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <p class="foot">本頁為初步健檢與選型估算：計算邏輯公開在頁面上（產水回推容量預留係數 20%、儲水以尖峰缺口公式、回收率依 TDS 初篩表、揚程分項加總）。原水水質若為估值，進場前須以實際檢測報告覆核後再定案設備規格與正式報價。</p>
+    </main>
+    </div>
+    <script>
+      var $ = function (id) { return document.getElementById(id); };
+      var RO_SIZES = [20,40,80,125,250,375,500,750,1000,1250,1500,2000,2500,3000,4000,5000,6000,8000,10000,12000,16000,20000,25000,30000];
+      var TANK_SIZES = [50,100,150,200,300,500,1000,1500,2000,3000,5000,8000,10000,15000,20000,30000];
+      var TARGET_LABEL = { process:"一般製程水（電導率 <10 µS/cm）", pure:"純水（≥1 MΩ·cm）", high:"高純水（≥10 MΩ·cm）", upw:"超純水（≥17 MΩ·cm）" };
+      var PATTERN_LABEL = { steady:"平穩連續", peak:"日間尖峰", burst:"瞬間大量取水" };
+      var PATTERN_FACTOR = { steady:1.0, peak:1.8, burst:3.0 };
+      var TERMINAL_LABEL = { dispenser:"飲水機（自帶內膽緩衝）", fountain:"多口飲水台（無內部儲水、瞬時流量主導）", mixed:"混合" };
+
+      var PRESETS = {
+        fab:   { name:"電子廠高純水案場", industry:"fab", source:"tap", daily:1920, hours:"24", pattern:"steady", target:"high", tds:240, chlorine:"yes", floors:2, loop:"no", backup:"dual" },
+        food:  { name:"食品廠製程水案場", industry:"food", source:"tap", daily:40000, hours:"16", pattern:"peak", target:"process", tds:280, chlorine:"yes", floors:2, loop:"no", backup:"pump" },
+        clinic:{ name:"醫療院所純水案場", industry:"clinic", source:"tap", daily:6000, hours:"12", pattern:"steady", target:"pure", tds:220, chlorine:"yes", floors:6, loop:"yes", backup:"dual" },
+        well:  { name:"地下水源工業案場", industry:"process", source:"well", daily:24000, hours:"16", pattern:"peak", target:"process", tds:620, chlorine:"no", floors:3, loop:"no", backup:"none" }
+      };
+
+      function raw(id) { var el = $(id); return el ? el.value : ""; }
+      function isBlank(id) { return raw(id).trim() === ""; }
+      function num(id, fallback) { var v = parseFloat(raw(id)); return isNaN(v) || v < 0 ? fallback : v; }
+      function numOrNull(id) { if (isBlank(id)) return null; var v = parseFloat(raw(id)); return isNaN(v) ? null : v; }
+      function fmt(n) { return Math.round(n).toLocaleString("en-US"); }
+      function fmt1(n) { return (Math.round(n * 10) / 10).toLocaleString("en-US"); }
+      function round1000(n) { return Math.round(n / 1000) * 1000; }
+      function pickSize(sizes, need) { for (var i = 0; i < sizes.length; i++) { if (sizes[i] >= need) return sizes[i]; } return sizes[sizes.length - 1]; }
+      function todayStr() { var d = new Date(); function p(x){return (x<10?"0":"")+x;} return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()); }
+
+      var MODE = "people";
+      var MACHINE_TYPES = [
+        { name:"桌上型", maxPeople:25, peakLPH:25, price:18000 },
+        { name:"落地型", maxPeople:60, peakLPH:50, price:32000 },
+        { name:"大容量型", maxPeople:150, peakLPH:110, price:68000 }
+      ];
+
+      /* ---------- 共用：交叉檢核（人數法 vs 工程法產水量） ---------- */
+      function peopleDailyQuick() {
+        var n = numOrNull("p_normal"), pd = numOrNull("p_perday"), h = numOrNull("p_hours");
+        if (n === null || pd === null || h === null || h <= 0 || h > 24) return null;
+        return { daily: n * pd, required: n * pd / h * 1.20 };
+      }
+      function engDailyQuick() {
+        var d = numOrNull("f_daily"); if (d === null) return null;
+        var h = parseFloat(raw("f_hours")) || 16;
+        return { daily: d, required: d / h * 1.20 };
+      }
+      function crossCheck() {
+        var a = peopleDailyQuick(), b = engDailyQuick();
+        if (!a || !b) return null;
+        var mx = Math.max(a.required, b.required);
+        if (mx <= 0) return null;
+        var D = Math.abs(a.required - b.required) / mx;
+        return { a: a, b: b, D: D };
+      }
+
+      /* ---------- 人數模式 ---------- */
+      function readCasePeople() {
+        var missing = [];
+        if (isBlank("p_normal")) missing.push("平常人數");
+        if (isBlank("p_peak")) missing.push("尖峰人數");
+        if (isBlank("p_perday")) missing.push("每人每日飲水量");
+        var h = numOrNull("p_hours");
+        if (h === null || h <= 0 || h > 24) missing.push("每日使用時段（須大於 0、不超過 24）");
+        var burstSel = raw("p_burstsel");
+        var burstMin = burstSel === "custom" ? num("p_burstmin", 30) : parseFloat(burstSel);
+        var normal = Math.max(1, Math.round(num("p_normal", 60)));
+        var peakIn = Math.max(1, Math.round(num("p_peak", normal)));
+        return {
+          missing: missing,
+          normal: normal, peakIn: peakIn, peak: Math.max(peakIn, normal),
+          points: Math.max(1, Math.round(num("p_points", 1))),
+          perday: Math.max(0.1, num("p_perday", 1.2)),
+          burstQty: Math.max(0.1, num("p_burstqty", 0.35)),
+          burstMin: Math.max(5, burstMin), burstSel: burstSel,
+          serveSec: Math.max(5, num("p_serve", 20)),
+          useHours: h === null ? 10 : h,
+          daily: Math.round(normal * Math.max(0.1, num("p_perday", 1.2)))
+        };
+      }
+      function peopleCalc(p) {
+        var peakRate = p.peak * p.burstQty / (p.burstMin / 60);
+        var count = Math.max(p.points, Math.ceil(p.normal / 60), 1);
+        var type = MACHINE_TYPES[1];
+        for (var i = 0; i < 12; i++) {
+          var per0 = p.normal / count;
+          type = per0 <= 25 ? MACHINE_TYPES[0] : (per0 <= 60 ? MACHINE_TYPES[1] : MACHINE_TYPES[2]);
+          var need = Math.max(p.points, Math.ceil(p.normal / type.maxPeople), Math.ceil(peakRate / type.peakLPH), 1);
+          if (need <= count) break;
+          count = need;
+        }
+        var per = p.normal / count;
+        type = per <= 25 ? MACHINE_TYPES[0] : (per <= 60 ? MACHINE_TYPES[1] : MACHINE_TYPES[2]);
+        var waitSec = (p.peak / count) * p.serveSec;
+        return { peakRate: peakRate, peakVolume: p.peak * p.burstQty, count: count, type: type, per: per, waitSec: waitSec, waitMin: waitSec / 60, totalPeakLPH: count * type.peakLPH };
+      }
+
+      /* ---------- 工程模式 ---------- */
+      function recoveryScreen(tds, source) {
+        if (source === "well" || source === "recycle" || source === "unknown") return { rec: null, why: "水源為地下水／回收水／來源不明，不自動給定" };
+        if (tds === null) return { rec: null, why: "TDS 待輸入" };
+        if (tds <= 300) return { rec: 0.70, why: "TDS ≤300 → 初篩 70%" };
+        if (tds <= 600) return { rec: 0.65, why: "TDS 301–600 → 初篩 65%" };
+        if (tds <= 1000) return { rec: 0.60, why: "TDS 601–1,000 → 初篩 60%" };
+        return { rec: null, why: "TDS ＞1,000 → 需工程審查，不自動給定" };
+      }
+      function readCaseEng() {
+        var missing = [];
+        var daily = numOrNull("f_daily");
+        if (daily === null) missing.push("每日用水量");
+        var hours = parseFloat(raw("f_hours")) || 16;
+        var tds = numOrNull("f_tds");
+        var scr = recoveryScreen(tds, raw("f_source"));
+        var pipelen = numOrNull("f_pipelen"), pipedia = numOrNull("f_pipedia");
+        var terminal = raw("f_terminal");
+        return {
+          missing: missing,
+          name: raw("f_name").trim() || "未命名案場", proposer: raw("f_proposer").trim(),
+          industry: raw("f_industry"), source: raw("f_source"), target: raw("f_target"),
+          daily: daily === null ? 0 : daily, hours: hours, pattern: raw("f_pattern"),
+          terminal: terminal, peakDurMin: Math.max(5, num("f_peakdur", 60)),
+          tds: tds, hard: numOrNull("f_hard"), iron: numOrNull("f_iron"),
+          sdi: numOrNull("f_sdi"), alk: numOrNull("f_alk"), ph: numOrNull("f_ph"),
+          silica: numOrNull("f_silica"), mn: numOrNull("f_mn"), turb: numOrNull("f_turb"),
+          chlorine: raw("f_chlorine"),
+          floors: Math.max(1, num("f_floors", 3)), floorH: Math.max(2, num("f_floorh", 3.5)),
+          equipLoss: Math.max(0, num("f_equiploss", 5)),
+          pipelen: pipelen, pipedia: pipedia,
+          loop: raw("f_loop"), backup: raw("f_backup"),
+          basedate: raw("f_basedate") || todayStr(),
+          scr: scr
+        };
+      }
+      function engCalc(c) {
+        var avgRate = c.daily / c.hours;
+        var required = avgRate * 1.20;
+        var ro = pickSize(RO_SIZES, required);
+        var margin = required > 0 ? ro / required - 1 : 0;
+        var peakRate = avgRate * PATTERN_FACTOR[c.pattern];
+        var tankRaw = Math.max(0, (peakRate - required) * (c.peakDurMin / 60));
+        var tank = tankRaw > 0 ? pickSize(TANK_SIZES, tankRaw) : 0;
+        var rec = c.scr.rec;
+        var cf = rec !== null ? 1 / (1 - rec) : null;
+        var concRate = rec !== null ? required * (1 - rec) / rec : null;
+        var concDay = concRate !== null ? concRate * c.hours : null;
+        var feedDay = rec !== null ? c.daily / rec : null;
+        var membranes = Math.max(1, Math.ceil(ro / 1000));
+        var staticHead = c.floors * c.floorH;
+        var residual = c.terminal === "fountain" ? 20 : 15;
+        var pipeLoss = null;
+        if (c.pipelen !== null && c.pipedia !== null && c.pipedia > 0) {
+          var area = Math.PI * Math.pow(c.pipedia / 1000, 2) / 4;
+          var vel = (required / 3600 / 1000) / area; /* required L/h → m3/s */
+          vel = (required / 1000 / 3600) / area;
+          var lossPer100 = Math.max(0.5, Math.pow(vel, 2) * 4.5); /* 簡式約估 m/100m */
+          pipeLoss = lossPer100 * c.pipelen / 100;
+        }
+        var headTotal = pipeLoss !== null ? staticHead + pipeLoss + c.equipLoss + residual : null;
+        return { avgRate: avgRate, required: required, ro: ro, margin: margin, peakRate: peakRate,
+          tankRaw: tankRaw, tank: tank, rec: rec, cf: cf, concRate: concRate, concDay: concDay, feedDay: feedDay,
+          membranes: membranes, staticHead: staticHead, residual: residual, pipeLoss: pipeLoss, headTotal: headTotal };
+      }
+      function engHealth(c, r) {
+        var items = [];
+        var srcLabel = { tap:"自來水", well:"地下水／井水", recycle:"回收水", unknown:"來源不明" }[c.source];
+        if (c.source === "tap") items.push({ s:"ok", t:"1 水源與用途", d:"水源為自來水、目標為" + TARGET_LABEL[c.target] + "，用途路徑明確，可續行初篩選型。" });
+        else if (c.source === "unknown") items.push({ s:"warn", t:"1 水源與用途", d:"水源不明（目前：" + srcLabel + "），回收率不自動給定；進場前先確認水源並取樣。" });
+        else items.push({ s:"warn", t:"1 水源與用途", d:"水源為" + srcLabel + "，水質波動與成分不確定性高，回收率不自動給定，須以完整水質分析定案。" });
+        if (c.tds === null) items.push({ s:"unk", t:"2 TDS", d:"待確認：TDS 未輸入，回收率初篩無法判定。" });
+        else if (c.tds <= 300) items.push({ s:"ok", t:"2 TDS", d:"TDS " + fmt(c.tds) + " mg/L，初篩回收率 70%，濃縮倍數 CF " + (r.cf ? r.cf.toFixed(2) : "—") + "。" });
+        else if (c.tds <= 1000) items.push({ s:"warn", t:"2 TDS", d:"TDS " + fmt(c.tds) + " mg/L，初篩回收率 " + Math.round(r.rec * 100) + "%，濃縮倍數 CF " + r.cf.toFixed(2) + "；結垢與滲透壓風險上升。" });
+        else items.push({ s:"bad", t:"2 TDS", d:"TDS " + fmt(c.tds) + " mg/L ＞1,000：停止自動選型，需完整水質分析與工程審查，不自動給定回收率。" });
+        if (c.sdi === null && c.turb === null) items.push({ s:"unk", t:"3 濁度／SDI", d:"待確認：SDI 與濁度未輸入，無法判定膜污染風險。" });
+        else if (c.sdi !== null && c.sdi > 5) items.push({ s:"bad", t:"3 濁度／SDI", d:"SDI " + c.sdi + " ＞5：停止自動選型，需完整水質分析並加強前處理後再評估。" });
+        else if (c.sdi !== null && c.sdi > 3) items.push({ s:"warn", t:"3 濁度／SDI", d:"SDI " + c.sdi + " 介於 3–5，須加強前處理（多介質過濾或 UF 評估）再進 RO。" });
+        else items.push({ s:"ok", t:"3 濁度／SDI", d:"SDI " + (c.sdi !== null ? c.sdi : "未填") + (c.turb !== null ? "、濁度 " + c.turb + " NTU" : "") + "，在 RO 進水可接受範圍（以已填值判定）。" });
+        if (c.hard === null) items.push({ s:"unk", t:"4 硬度", d:"待確認：硬度未輸入，結垢風險無法判定。" });
+        else if (c.hard <= 100) items.push({ s:"ok", t:"4 硬度", d:"硬度 " + fmt(c.hard) + " mg/L，結垢風險低。" });
+        else if (c.hard <= 250) items.push({ s:"warn", t:"4 硬度", d:"硬度 " + fmt(c.hard) + " mg/L，建議軟化或降低回收率管理結垢（本設計不採化學加藥）。" });
+        else items.push({ s:"bad", t:"4 硬度", d:"硬度 " + fmt(c.hard) + " mg/L 屬高結垢風險：停止自動選型，需完整水質分析；軟化為必要前處理且回收率不得上調。" });
+        if (c.ph === null && c.alk === null) items.push({ s:"unk", t:"5 pH＋鹼度", d:"待確認：pH 與鹼度未輸入，結垢傾向（LSI）無法判定。" });
+        else if (c.ph !== null && (c.ph < 6.5 || c.ph > 8.5)) items.push({ s:"warn", t:"5 pH＋鹼度", d:"pH " + c.ph + " 超出常見自來水範圍" + (c.alk !== null ? "、鹼度 " + fmt(c.alk) + " mg/L" : "") + "，須納入結垢／腐蝕評估。" });
+        else items.push({ s:"ok", t:"5 pH＋鹼度", d:"pH " + (c.ph !== null ? c.ph : "未填") + (c.alk !== null ? "、鹼度 " + fmt(c.alk) + " mg/L" : "") + "，無明顯異常（以已填值判定）；正式結垢評估仍須完整水質。" });
+        if (c.silica === null) items.push({ s:"unk", t:"6 矽", d:"待確認：矽未輸入，高回收率下的矽結垢上限無法判定。" });
+        else if (c.silica > 20) items.push({ s:"warn", t:"6 矽", d:"矽 " + fmt(c.silica) + " mg/L 偏高，濃縮後易形成矽垢，回收率須受矽上限約束。" });
+        else items.push({ s:"ok", t:"6 矽", d:"矽 " + fmt(c.silica) + " mg/L，在初篩可接受範圍。" });
+        var fe = c.iron, mn = c.mn;
+        if (fe === null && mn === null) items.push({ s:"unk", t:"7 鐵錳及懸浮物", d:"待確認：鐵、錳未輸入。" });
+        else if ((fe !== null && fe > 0.3) || (mn !== null && mn > 0.1)) items.push({ s:"bad", t:"7 鐵錳及懸浮物", d:"鐵 " + (fe !== null ? fe : "未填") + "／錳 " + (mn !== null ? mn : "未填") + " mg/L 超過 RO 進水耐受：停止自動選型，需完整水質分析並先做氧化過濾除鐵錳。" });
+        else items.push({ s:"ok", t:"7 鐵錳及懸浮物", d:"鐵 " + (fe !== null ? fe : "未填") + "／錳 " + (mn !== null ? mn : "未填") + " mg/L，在可接受範圍（以已填值判定）。" });
+        if (c.chlorine === "yes") items.push({ s:"warn", t:"8 餘氯與微生物風險", d:"原水含餘氯，RO 膜不耐氯，活性碳除氯為必要前處理；微生物風險以 UV 或消毒單元把關（觸發清單）。" });
+        else if (c.chlorine === "unknown") items.push({ s:"unk", t:"8 餘氯與微生物風險", d:"待確認：餘氯未檢測，先以活性碳除氯保底設計，進場前補測。" });
+        else items.push({ s:"ok", t:"8 餘氯與微生物風險", d:"原水無餘氯，膜無氧化風險；微生物把關依用途與末端型態評估消毒單元。" });
+        return items;
+      }
+      function engBOM(c, r, pm) {
+        var items = [];
+        function add(layer, name, spec, qty, base, src, why) { items.push({ layer: layer, name: name, spec: spec, qty: qty, base: base, src: src, why: why }); }
+        var ff = r.ro / 1000;
+        add(1, "原水隔離與壓力監測", "進水隔離閥＋壓力表／壓力開關，保護後段設備", "1 式", 15000, "人工暫估", "必備核心：任何 RO 系統的進水保護與狀態監測。");
+        add(1, "前置過濾（砂濾／多介質）", "對應 " + fmt(r.ro) + " LPH 進水量，去除懸浮物降 SDI", "1 組", round1000(50000 + ff * 12000), "人工暫估", "必備核心：RO 進水 SDI 把關。");
+        add(1, "保安過濾器", "5 µm 精密濾芯，RO 進水最後把關", "1 組", 12000, "歷史採購", "必備核心：攔截前處理洩漏顆粒。");
+        add(1, "RO 高壓泵", "對應 " + fmt(r.ro) + " LPH 與回收率初篩揚程需求", "1 台", round1000(38000 + ff * 22000), "人工暫估", "必備核心：提供膜組操作壓力。");
+        add(1, "RO 膜組", fmt(r.ro) + " LPH，" + (r.ro >= 250 ? "8040 膜 × " + r.membranes + " 支低通量設計" : "小型商用膜組低通量設計"), "1 組", round1000(120000 + r.ro * 90), "人工暫估", "必備核心：主脫鹽單元，低通量換膜壽命。");
+        add(1, "產水／濃水流量監測", "產水與濃水流量計，回收率即時核對", "1 式", 18000, "人工暫估", "必備核心：回收率與濃水量計算須有實測依據。");
+        add(1, "導電度監測", "原水／產水導電度計，脫鹽率監控", "1 式", 22000, "人工暫估", "必備核心：水質達標路徑的連續證據。");
+        add(1, "沖洗與排水配置", "膜沖洗管路與濃水排水銜接", "1 式", 12000, "人工暫估", "必備核心：停機沖洗延緩結垢、濃水須有去向。");
+        add(1, "控制盤與保護", c.backup === "dual" || c.target === "high" || c.target === "upw" ? "PLC／HMI 監控、全儀表回傳與異常預警" : "自動控制盤、液位與壓力保護連鎖", "1 式", (c.backup === "dual" || c.target === "high" || c.target === "upw") ? 230000 : 65000, "歷史採購", "必備核心：自動啟停與故障保護。");
+        if (c.chlorine !== "no") add(2, "活性碳過濾器", c.chlorine === "unknown" ? "餘氯未檢測，先以除氯保底" : "去除餘氯，保護 RO 膜", "1 組", round1000(52000 + ff * 12000), "人工暫估", "水質條件觸發：餘氯存在（或未檢測保底）→ 膜不耐氯。");
+        if (c.hard !== null && c.hard > 100) add(2, "樹脂軟化設備", "硬度 " + fmt(c.hard) + " mg/L 對應容量，自動再生", "1 組", round1000(56000 + ff * 14000), "人工暫估", "水質條件觸發：硬度偏高 → 軟化或降回收管理結垢。");
+        if (c.sdi !== null && c.sdi > 3) add(2, "加強前處理（UF 評估）", "SDI " + c.sdi + " 不合 RO 進水要求，先降 SDI 再進膜", "1 組", round1000(80000 + ff * 20000), "人工暫估", "水質條件觸發：SDI 不合 → 加強前處理。");
+        if ((c.iron !== null && c.iron > 0.3) || (c.mn !== null && c.mn > 0.1)) add(2, "氧化過濾除鐵錳", "曝氣／氧化＋除鐵錳濾材，進 RO 前去除", "1 組", round1000(68000 + ff * 14000), "人工暫估", "水質條件觸發：鐵錳超標 → 氧化過濾。");
+        if (c.loop === "yes" || c.terminal === "fountain" || c.target !== "process") add(2, "消毒單元（UV）", c.loop === "yes" ? "供水＋迴水雙點殺菌" : "出水端殺菌把關", "1 台", r.ro >= 1000 ? 45000 : 28000, "歷史採購", "水質條件觸發：微生物風險／迴水殺菌需求 → 消毒。");
+        if (c.target === "high" || c.target === "upw") add(2, "EDI 連續除鹽模組", "連續產出高純水，免酸鹼再生", "1 組", round1000(120000 + r.ro * 60), "人工暫估", "水質條件觸發：目標 ≥10 MΩ·cm → RO 後須連續除鹽。");
+        if (c.target === "pure") add(2, "拋光混床", "RO 後段拋光至 ≥1 MΩ·cm", "1 組", 60000, "人工暫估", "水質條件觸發：目標 ≥1 MΩ·cm → 拋光。");
+        if (c.target === "upw") add(2, "終端拋光＋UV（TOC 控制）", "超純水終端把關", "1 組", 88000, "人工暫估", "水質條件觸發：超純水終端品質把關。");
+        if (r.tank > 0) add(3, "不鏽鋼產水槽", "304 不鏽鋼 " + fmt(r.tank) + " L（尖峰缺口公式估算 " + fmt(r.tankRaw) + " L，規格取上一級）", "1 座", round1000(r.tank * 20), "歷史採購", "需求觸發：尖峰用水速率高於產水速率，缺口須儲水緩衝。");
+        if (c.floors >= 4 || c.terminal === "fountain" || c.terminal === "mixed") add(3, "供水泵組（變頻恆壓）", c.backup === "none" ? "單泵變頻恆壓，揚程分項精算" : "雙泵輪替備援，揚程分項精算", "1 組", c.backup === "none" ? 48000 : 85000, "歷史採購", "需求與末端觸發：高樓層／多點供水 → 恆壓供水。");
+        if (c.terminal === "fountain") { add(3, "大容量壓力桶或末端加壓泵（評估）", "飲水台無內部儲水，瞬時流量主導，末端殘壓以 20 m 計", "1 式", 35000, "人工暫估", "末端觸發：飲水台瞬時流量 → 壓力桶或末端加壓評估。"); add(3, "變頻恆壓與大幹管評估", "多口同時取水，主管管徑與壓降須專項評估", "1 式", 20000, "人工暫估", "末端觸發：飲水台多口同時出水 → 恆壓與大幹管。"); }
+        if (c.backup === "dual") add(3, "雙泵備援與監控預警", "關鍵案場不停供：雙泵備援＋異常預警", "1 式", 60000, "人工暫估", "需求觸發：不停供要求 → 備援。");
+        if (pm) add(3, "飲水機（" + pm.type.name + "）", "每台服務約 " + Math.round(pm.per) + " 人，尖峰出水 " + pm.type.peakLPH + " LPH／台（人數模式交叉檢核帶入）", pm.count + " 台", pm.count * pm.type.price, "人工暫估", "需求觸發：人數模式台數結論（交叉檢核值）。");
+        if (c.loop === "yes") add(3, "迴水泵與迴路調節組", "迴水循環動力與壓力調節；有迴水泵分擔時供水泵可評估小一級", "1 組", 38000, "人工暫估", "需求觸發：迴水循環殺菌需求。");
+        add(4, "基座、防震與排水", "設備基座、防震墊與地坪排水銜接", "1 式", 18000, "人工暫估", "現場施工：設備就位與排水基本條件。");
+        add(4, "電源保護", "專用迴路、漏電與突波保護", "1 式", 15000, "人工暫估", "現場施工：用電安全與保護。");
+        add(4, "管線閥件", "系統內配管、閥件與隔離點", "1 式", round1000(30000 + ff * 15000), "人工暫估", "現場施工：系統銜接與日後隔離維護。");
+        add(4, "液位控制", "水槽高低液位連鎖與溢流保護", "1 式", 12000, "人工暫估", "現場施工：儲水安全運轉。");
+        add(4, "試車採樣", "試運轉、水質採樣與運轉紀錄交付", "1 式", 10000, "人工暫估", "現場施工：驗收證據建立。");
+        var lo = 0, base = 0, hi = 0;
+        items.forEach(function (it) { lo += Math.round(it.base * 0.85); base += it.base; hi += Math.round(it.base * 1.2); });
+        return { items: items, lo: lo, base: base, hi: hi };
+      }
+      function engRisks(c, r, h) {
+        var risks = [];
+        h.forEach(function (it) { if (it.s === "bad") risks.push("停止自動選型（紅燈）：" + it.d); });
+        if (r.rec === null) risks.push("回收率未定：本案屬不自動給定情境，須完成完整水質分析（硬度、鹼度、pH、矽、SDI）後由工程審查定案。");
+        if (c.chlorine === "unknown") risks.push("進場前必測：餘氯（另建議同批檢測 TDS、硬度、鐵、濁度與 SDI），檢測結果回來後覆核前處理配置再定案。");
+        if (c.source === "well") risks.push("地下水源水質隨季節波動，定案前至少取一次完整水質分析；回收率以檢測值為準。");
+        if (r.concDay !== null) risks.push("濃水去向先確認：每日約 " + fmt(r.concDay) + " L 濃水排放（濃水量 ＝ 產水 " + fmt(r.required) + " L/h ×（1 − " + Math.round(r.rec * 100) + "%）÷ " + Math.round(r.rec * 100) + "% ＝ " + fmt(r.concRate) + " L/h × " + c.hours + " h），須確認排水容量與放流規定可承接。");
+        if (r.headTotal === null) risks.push("揚程未完成：管長與管徑未輸入，暫不輸出泵型結論；正式設計補齊管路資料後，以靜揚程＋管損＋設備壓損＋末端殘壓逐項精算，NPSH 另行核對。");
+        else risks.push("揚程分項：靜揚程 " + fmt1(r.staticHead) + " m＋管損 " + fmt1(r.pipeLoss) + " m（簡式估算）＋設備壓損 " + fmt1(c.equipLoss) + " m＋末端殘壓 " + r.residual + " m ＝ " + fmt1(r.headTotal) + " m；低樓層區壓力過高處以減壓閥分區並校核耐壓，NPSH 另行核對。");
+        if (c.target === "high" || c.target === "upw") risks.push("高純水案場的驗收以連續監測數據為準：建議約定水質儀表規格、取樣點與連續紀錄天數，寫入驗收條件。");
+        risks.push("下一步：現場勘查（機房位置、用電與排水條件）→ 水質檢測覆核 → 依本建議書架構出正式報價與 PFD 流程圖。");
+        return risks;
+      }
+
+      /* ---------- 飲水機模式 ---------- */
+      var DW_GENERAL = { "臺北市":1, "新北市":1, "宜蘭縣":1, "花蓮縣":1, "基隆市":1 };
+      var DW_ISLAND = { "澎湖縣":1, "金門縣":1, "連江縣":1 };
+      var DW_VENUE_LABEL = { office:"辦公室", factory:"工廠・倉庫", school:"學校・機關", outdoor:"戶外・半戶外" };
+      var DW_VENUE_RATIO = { office:[60,25,15], factory:[35,30,35], school:[25,45,30], outdoor:[15,35,50] };
+      var DW_VENUE_PEAK = { office:0.30, factory:0.40, school:0.60, outdoor:0.40 };
+      var DW_VENUE_PEAKMIN = { office:30, factory:30, school:10, outdoor:30 };
+      var DW_TYPE_LABEL = { floor:"落地三溫全煮型（一般級）", floorXL:"落地三溫全煮型（機關大流量級）", direct:"生飲型", under:"廚下型", fountain:"飲水台" };
+      var DW_TIERS = [ { gal:60, cap:227 }, { gal:100, cap:379 }, { gal:150, cap:568 } ];
+      var PIPE_FLOW = { "0.5":{ lo:12, hi:18 }, "0.75":{ lo:21, hi:31 }, "1":{ lo:33, hi:50 }, "1.25":{ lo:52, hi:78 } };
+      var PIPE_LABEL = { "0.5":"1/2\"", "0.75":"3/4\"", "1":"1\"", "1.25":"1-1/4\"" };
+
+      function dwRouteDefault(city) { if (DW_GENERAL[city]) return "general"; if (DW_ISLAND[city]) return "roIsland"; return "ro"; }
+      function readDw() {
+        var users = numOrNull("d_users");
+        var missing = [];
+        if (users === null) missing.push("使用人數");
+        if (isBlank("d_peakpeople")) missing.push("尖峰人次");
+        var eff = numOrNull("d_effhours");
+        if (eff === null || eff <= 0 || eff > 24) missing.push("有效運轉時數（須大於 0、不超過 24）");
+        var ratios = [Math.max(0, num("d_rhot", 0)), Math.max(0, num("d_rwarm", 0)), Math.max(0, num("d_rice", 0))];
+        return {
+          missing: missing,
+          city: raw("d_city"), route: raw("d_route"), routeDefault: dwRouteDefault(raw("d_city")),
+          venue: raw("d_venue"), typeSel: raw("d_type"),
+          users: users === null ? 50 : Math.max(1, Math.round(users)),
+          rooms: Math.max(1, Math.round(num("d_rooms", 1))),
+          peakPeople: Math.max(1, Math.round(num("d_peakpeople", 15))),
+          peakMin: Math.max(5, num("d_peakmin", 30)),
+          perday: Math.max(0.1, num("d_perday", 2.0)),
+          peakQty: Math.max(0.05, num("d_peakqty", 0.5)),
+          ratios: ratios, rsum: ratios[0] + ratios[1] + ratios[2],
+          power: raw("d_power"), effHours: eff === null ? 8 : eff,
+          pressure: raw("d_pressure"), drain: raw("d_drain"), space: raw("d_space"),
+          bigload: raw("d_bigload"), holiday: raw("d_holiday"),
+          interval: Math.max(5, num("d_interval", 40))
+        };
+      }
+      function dwAutoType(d) {
+        if (d.venue === "outdoor") return { type:"floor", why:"戶外・半戶外場域溫差與使用強度大，落地三溫全煮型三種水溫皆經煮沸、機身耐用。" };
+        if (d.users >= 150) return { type:"floorXL", why:"使用人數 " + d.users + " 人，尖峰量大，建議機關大流量級（熱水與冰水產能高；樣本較少，個案請核對型錄）。" };
+        if (d.users <= 20) return { type:"under", why:"使用人數 " + d.users + " 人在廚下型提醒值 20 人內，廚下型省空間、冷水生飲直出即可對應。" };
+        if (d.venue === "office") return { type:"direct", why:"辦公室以溫水為日常主力，生飲型溫水生飲直出不用等加熱，熱水尖峰再以加熱產能檢核台數。" };
+        return { type:"floor", why:DW_VENUE_LABEL[d.venue] + "、" + d.users + " 人，落地三溫全煮型熱水產能最能扛尖峰。" };
+      }
+      function dwCaps(type, v220) {
+        /* cap: L/h 連續產能; store: 缸存量 L; direct: 直出流量 L/min（該路改流量檢核） */
+        if (type === "floor") return {
+          hot:{ cap: v220 ? 25 : 10, store:14 }, warm:{ cap: v220 ? 25 : 10, store:9, note:"溫水產能以熱水產能推估，存量用溫缸 9 L" }, ice:{ cap:5, store:3 },
+          hotNote:"熱水 " + (v220 ? "25" : "10") + " L/h（" + (v220 ? "220V" : "110V") + "）、熱缸 14 L", iceNote:"冰水 5 L/h、冰缸 3 L" };
+        if (type === "floorXL") return {
+          hot:{ cap: v220 ? 45 : 30, store:14 }, warm:{ cap: v220 ? 45 : 30, store:9, note:"溫水產能以熱水產能推估，存量用溫缸 9 L" }, ice:{ cap:17, store:3 },
+          hotNote:"熱水 " + (v220 ? "45" : "30") + " L/h（機關大流量級；樣本較少，個案請核對型錄）", iceNote:"冰水 17 L/h（樣本較少，個案請核對型錄）" };
+        if (type === "direct") return {
+          hot:{ cap: v220 ? 20 : 10, store:0, note:"未提供缸存量，以連續產能保守計算" }, warm:{ direct:1.5 }, ice:{ cap:5, store:0, note:"冰水 5 L/h（推估），未提供缸存量，以連續產能保守計算" },
+          hotNote:"熱水 " + (v220 ? "20" : "10") + " L/h（工程推估）", iceNote:"冰水 5 L/h（推估）" };
+        return { /* under */
+          hot:{ cap:8, store:3.5 }, warm:{ cap:8, store:0, note:"溫水以冷熱混合概算，產能以熱水 8 L/h 推估、無獨立存量" }, ice:{ direct:1.5, note:"冷水生飲直出 1.5 L/min；冰水連續產能 3 L/h（推估）另註" },
+          hotNote:"熱水 8 L/h、熱缸 3.5 L", iceNote:"冷水直出 1.5 L/min（冰水 3 L/h 推估）" };
+      }
+      function dwCalc(d) {
+        var auto = dwAutoType(d);
+        var type = d.typeSel === "auto" ? auto.type : d.typeSel;
+        var v220 = d.power === "v220";
+        var caps = dwCaps(type, v220);
+        var rs = d.rsum > 0 ? d.rsum : 100;
+        var fr = [d.ratios[0] / rs, d.ratios[1] / rs, d.ratios[2] / rs];
+        var peakVol = d.peakPeople * d.peakQty;
+        var keys = ["hot","warm","ice"], labels = { hot:"熱水", warm: type === "under" ? "溫水" : "溫水", ice: type === "under" ? "冷水" : "冰水" };
+        var roads = keys.map(function (k, i) {
+          var c = caps[k];
+          var vd = peakVol * fr[i];
+          var rd = { key:k, label:labels[k], vd:vd, frac:fr[i], cap:c.cap || null, store:c.store || 0, direct:c.direct || null, note:c.note || "" };
+          if (rd.direct) {
+            rd.demandFlow = d.peakPeople * d.peakQty * fr[i] / d.peakMin; /* L/min */
+            rd.units = rd.demandFlow > 0 ? Math.max(1, Math.ceil(rd.demandFlow / rd.direct)) : 0;
+            rd.va = null;
+          } else {
+            rd.va = rd.store + rd.cap * (d.peakMin / 60);
+            rd.units = vd > 0 ? Math.max(1, Math.ceil(vd / rd.va)) : 0;
+          }
+          return rd;
+        });
+        var peakUnits = Math.max(roads[0].units, roads[1].units, roads[2].units, 1);
+        var bottleneck = roads[0];
+        roads.forEach(function (rd) { if (rd.units > bottleneck.units) bottleneck = rd; });
+        var daily = d.users * d.perday;
+        var needRated = daily / d.effHours * 1.20 * 24; /* 換算為 24h 額定造水量 L/day */
+        var tier = null;
+        for (var i = 0; i < DW_TIERS.length; i++) { if (needRated <= DW_TIERS[i].cap) { tier = DW_TIERS[i]; break; } }
+        var dailyUnits = tier ? 1 : Math.ceil(needRated / 568);
+        if (!tier) tier = DW_TIERS[2];
+        var distUnits = d.rooms;
+        var count = Math.max(peakUnits, dailyUnits, distUnits);
+        var driver = count === peakUnits ? "存量＋回補檢核" : (count === dailyUnits ? "日量檢核" : "分點檢核");
+        /* 容量結果（瓶頸路） */
+        var bn = bottleneck, capRes;
+        if (bn.direct) {
+          var supplyFlow = count * bn.direct;
+          capRes = { exhausted:false, text: supplyFlow >= bn.demandFlow ? "直出流量足夠" : "直出流量不足",
+            f:"直出路需求流量 " + fmt1(bn.demandFlow) + " L/min vs " + count + " 台 × " + bn.direct + " L/min ＝ " + fmt1(supplyFlow) + " L/min" };
+        } else {
+          var totalStore = count * bn.store, totalVa = count * bn.va;
+          var netRate = bn.vd / d.peakMin - count * bn.cap / 60; /* L/min 淨消耗 */
+          var exhaustMin = (bn.vd > totalVa) ? (netRate > 0 ? totalStore / netRate : d.peakMin) : null;
+          capRes = { exhausted: exhaustMin !== null, exhaustMin: exhaustMin,
+            text: exhaustMin !== null ? ("存量將於尖峰第 " + fmt1(Math.min(exhaustMin, d.peakMin)) + " 分鐘耗盡") : "尖峰期間存量不耗盡",
+            f:"瓶頸路（" + bn.label + "）需求 " + fmt1(bn.vd) + " L vs " + count + " 台可供 " + fmt1(totalVa) + " L（存量 " + fmt1(totalStore) + " L＋回補 " + fmt1(totalVa - totalStore) + " L），餘裕 " + fmt1(totalVa - bn.vd) + " L" };
+        }
+        /* 服務結果：出水流量＋換人時間消化估算（假設：單口出水 1.5 L/min、換人 8 秒，與飲水台邏輯一致，註明假設） */
+        var occSec = (d.peakQty / 1.5) * 60 + 8;
+        var digestMin = d.peakPeople * occSec / count / 60;
+        /* 恢復檢核（存量路取最長） */
+        var recWorst = null;
+        roads.forEach(function (rd) {
+          if (rd.direct || !rd.cap) return;
+          var draw = Math.max(0, rd.vd - count * rd.cap * (d.peakMin / 60));
+          var recMin = draw > 0 ? draw / (count * rd.cap) * 60 : 0;
+          if (!recWorst || recMin > recWorst.min) recWorst = { road: rd.label, draw: draw, min: recMin };
+        });
+        var recOk = recWorst ? recWorst.min <= d.interval : true;
+        var roLPH = daily / d.effHours * 1.20;
+        return { auto:auto, type:type, v220:v220, caps:caps, fr:fr, peakVol:peakVol, peakRate: peakVol / (d.peakMin / 60),
+          roads:roads, peakUnits:peakUnits, bottleneck:bn, daily:daily, tier:tier, needRated:needRated, dailyUnits:dailyUnits,
+          distUnits:distUnits, count:count, driver:driver, capRes:capRes, occSec:occSec, digestMin:digestMin,
+          recWorst:recWorst, recOk:recOk, roLPH:roLPH, per:d.users / count };
+      }
+      function dwUnconfirmed(d) {
+        var u = [];
+        if (d.pressure === "unknown") u.push("水壓狀態未確認");
+        if (d.space === "unknown") u.push("安裝空間與散熱未確認");
+        if (d.drain === "unknown") u.push("排水（排水孔／地漏）未確認");
+        if (d.power === "unknown") u.push("電源未確認（以 110V 暫估計算）");
+        if (d.bigload === "unknown") u.push("同迴路大電流設備未確認");
+        if (d.holiday === "unknown") u.push("假日停機情形未確認");
+        return u;
+      }
+      function dwHealth(d, w) {
+        var items = [];
+        var routeName = { general:"一般過濾", ro:"RO 逆滲透", roIsland:"RO 逆滲透（離島）" };
+        if (d.route === d.routeDefault) items.push({ s:"ok", t:"1 水源與水質證據", d:"目前路線「" + routeName[d.route] + "」與 " + d.city + " 的地區預設相符；實際仍以現場水質為準。" });
+        else items.push({ s:"warn", t:"1 水源與水質證據", d:"路線已手動改為「" + routeName[d.route] + "」，與 " + d.city + " 的地區預設「" + routeName[d.routeDefault] + "」不同，請確認有現場水質依據。" });
+        var highHard = !DW_GENERAL[d.city];
+        if (highHard && d.route === "general") items.push({ s:"bad", t:"2 處理路線適配", d:d.city + " 屬硬度與 TDS 較高地區，卻採一般過濾：建議調整為 RO，減少水垢、保護加熱製冷系統。" });
+        else if (d.route === "roIsland") items.push({ s:"ok", t:"2 處理路線適配", d:"離島水源特殊，採 RO 並建議加強前置，路線適配。" });
+        else items.push({ s:"ok", t:"2 處理路線適配", d:"路線「" + routeName[d.route] + "」與 " + d.city + " 水質概況適配。" });
+        if (w.capRes.exhausted) items.push({ s:"bad", t:"3 尖峰存量＋回補", d:"瓶頸路（" + w.bottleneck.label + "）" + w.capRes.text + "：存量＋回補檢核不足，建議增台或升級距。" });
+        else items.push({ s:"ok", t:"3 尖峰存量＋回補", d:"存量＋回補檢核通過：" + w.capRes.f + "。" });
+        var directRoads = w.roads.filter(function (rd) { return rd.direct; });
+        if (d.pressure === "unknown") items.push({ s:"unk", t:"4 直出流量與水壓", d:"待確認：水壓狀態未確認" + (directRoads.length ? "，直出路流量檢核已以額定 1.5 L/min 計算，水壓偏低時實際流量會下降" : "，本機型以存量路為主，水壓影響進水補水速度") + "。" });
+        else if (d.pressure === "low") items.push({ s:"warn", t:"4 直出流量與水壓", d:"水壓偏低：直出路實際流量可能低於額定、RO 產水亦受影響，建議現場量測水壓並評估增壓。" });
+        else if (d.pressure === "high") items.push({ s:"warn", t:"4 直出流量與水壓", d:"水壓偏高：建議設減壓保護，避免直出流量異常與管件負荷。" });
+        else if (directRoads.length) { var dr = directRoads[0]; items.push({ s: (w.count * dr.direct >= dr.demandFlow) ? "ok" : "bad", t:"4 直出流量與水壓", d:"直出路（" + dr.label + "）需求流量 " + fmt1(dr.demandFlow) + " L/min，" + w.count + " 台可供 " + fmt1(w.count * dr.direct) + " L/min；水壓正常。" }); }
+        else items.push({ s:"ok", t:"4 直出流量與水壓", d:"本機型無直出路瓶頸，水壓正常，進水補水條件無異常。" });
+        if (d.route === "general") items.push({ s:"ok", t:"5 RO 日量、儲水與恢復時間", d:"一般過濾路線不需 RO 日量檢核；恢復檢核：" + (w.recOk ? "尖峰後存量缺口約 " + (w.recWorst ? fmt1(w.recWorst.draw) : 0) + " L，回補約 " + (w.recWorst ? fmt1(w.recWorst.min) : 0) + " 分鐘，在間隔 " + d.interval + " 分鐘內。" : "回補不足（見恢復檢核）。") });
+        else if (!w.recOk) items.push({ s:"bad", t:"5 RO 日量、儲水與恢復時間", d:"RO 級距 " + w.tier.gal + " GPD 已選定，但恢復檢核不足：下一波尖峰前存量補不回，建議增台或升級距。" });
+        else items.push({ s:"ok", t:"5 RO 日量、儲水與恢復時間", d:"日量 " + fmt(w.daily) + " L 換算需額定 " + fmt(w.needRated) + " L/day → " + w.tier.gal + " GPD 級距；尖峰後回補約 " + (w.recWorst ? fmt1(w.recWorst.min) : 0) + " 分鐘 ≤ 間隔 " + d.interval + " 分鐘。" });
+        if (d.power === "unknown") items.push({ s:"unk", t:"6 電源、迴路與安培數", d:"待確認：電源未確認，目前以 110V 暫估計算，未完成電源確認；確認後若可供 220V 請切換重算。" });
+        else if (w.count > 1 && d.bigload === "yes") items.push({ s:"bad", t:"6 電源、迴路與安培數", d:w.count + " 台同場且同迴路有其他大電流設備：加熱同時啟動有跳電風險，建議分迴路或錯峰啟動並核算安培數。" });
+        else if (d.bigload === "unknown" && w.count > 1) items.push({ s:"warn", t:"6 電源、迴路與安培數", d:w.count + " 台配置，同迴路是否有大電流設備未確認；多台加熱同時啟動前請先核算迴路安培數。" });
+        else items.push({ s:"ok", t:"6 電源、迴路與安培數", d:"電源以 " + (w.v220 ? "220V" : "110V") + " 計算（熱水產能 " + (w.caps.hot.cap || "—") + " L/h），迴路條件無已知衝突。" });
+        if (d.space === "unknown") items.push({ s:"unk", t:"7 空間、散熱", d:"待確認：安裝空間與散熱未確認，進場前量測擺放與散熱距離。" });
+        else if (d.space === "tight") items.push({ s:"warn", t:"7 空間、散熱", d:"安裝空間受限：製冷與加熱機型散熱不足會降效，建議預留散熱間距或改廚下／分點配置。" });
+        else items.push({ s:"ok", t:"7 空間、散熱", d:"安裝空間與散熱足夠。" });
+        if (d.drain === "unknown") items.push({ s:"unk", t:"8 排水與防漏", d:"待確認：排水孔或地漏未確認；RO 濃水與接水盤排水需有去向，進場前確認。" });
+        else if (d.drain === "no") items.push({ s:"bad", t:"8 排水與防漏", d:"無排水孔或地漏：RO 濃水無去向、接水盤機型安裝受限，建議先解決排水再定案，或改無排水需求配置並設漏水警報。" });
+        else items.push({ s:"ok", t:"8 排水與防漏", d:"有排水孔或地漏，RO 濃水與接水盤排水有去向。" });
+        if (d.holiday === "unknown") items.push({ s:"unk", t:"9 假日停機與復機", d:"待確認：假日是否長時間停機未確認。" });
+        else if (d.holiday === "yes") items.push({ s:"warn", t:"9 假日停機與復機", d:"假日長時間停機：存水久置有微生物風險，復機時先排水／沖洗（全煮型依原廠程序殺菌）再供飲用。" });
+        else items.push({ s:"ok", t:"9 假日停機與復機", d:"無長時間停機情形，日常運轉即可。" });
+        items.push({ s:"warn", t:"10 維護與檢驗紀錄", d:"提醒：濾芯（與 RO 膜）更換週期、定期維護與水質檢驗須列入計畫並留存紀錄；生飲水質全靠濾芯把關，逾期未換即失去把關。" });
+        if (w.type === "under" && d.users / w.count > 20) items.push({ s:"warn", t:"廚下型服務人數提醒", d:"每台平均服務 " + fmt1(w.per) + " 人，超過提醒值 20 人：建議增台或改落地型（提醒，不強制）。" });
+        return items;
+      }
+      function dwBOM(d, w) {
+        var items = [];
+        items.push({ name:"飲水機主機（" + DW_TYPE_LABEL[w.type] + "）", spec:(w.v220 ? "220V" : "110V") + " 機型；" + w.caps.hotNote + "；" + w.caps.iceNote, qty: w.count + " 台" });
+        if (d.route !== "general") items.push({ name:"RO 逆滲透系統", spec:"RO 額定造水量級距 " + w.tier.gal + " GPD（" + w.tier.cap + " L/day，24 小時標準條件額定值，與飲水機本體供水能力分開）" + (d.route === "roIsland" ? "；離島加強前置" : ""), qty: w.dailyUnits + " 組" });
+        else items.push({ name:"前置過濾", spec:"一般過濾路線：前置濾芯組把關進水", qty: d.rooms + " 組" });
+        items.push({ name:"濾芯組", spec:(d.route === "general" ? "過濾濾芯" : "前置濾芯＋RO 膜") + (w.type === "direct" ? "＋生飲濾芯" : "") + "，首年更換備品，週期列入維護計畫", qty: w.count + " 組" });
+        if (d.drain === "no") items.push({ name:"漏水警報器", spec:"無排水孔／地漏場域的防漏配套", qty: w.count + " 台" });
+        return items;
+      }
+      function dwRisks(d, w, h) {
+        var risks = [];
+        h.forEach(function (it) { if (it.s === "bad") risks.push("優先處理：" + it.d); });
+        if (d.power !== "v220") risks.push("電源確認：目前以 110V 產能計算" + (d.power === "unknown" ? "（暫估，未完成電源確認）" : "") + "，進場前確認茶水間迴路電壓與安培數；若可提供 220V，請回工具切換後重算，台數可能減少。");
+        if (!w.recOk) risks.push("恢復檢核：下一波尖峰前存量補不回（瓶頸路缺口約 " + (w.recWorst ? fmt1(w.recWorst.draw) : "—") + " L、回補約需 " + (w.recWorst ? fmt1(w.recWorst.min) : "—") + " 分鐘 ＞ 間隔 " + d.interval + " 分鐘），建議增台或升級距。");
+        if (d.route !== "general") risks.push("RO 路線注意濃水排放與濾芯／RO 膜更換週期，須列入維護計畫。");
+        risks.push("價格說明：飲水機清單不列金額，依品牌型號另行報價；正式報價以現場勘查（電源、給排水、空間）覆核後定案。");
+        risks.push("下一步：確認電源迴路 → 確認給排水與安裝空間 → 依本建議書出正式報價。");
+        return risks;
+      }
+
+      /* ---------- 飲水台子模組 ---------- */
+      function readFountain(d) {
+        var missing = [];
+        if (isBlank("d_peakpeople")) missing.push("尖峰人次");
+        var host = numOrNull("w_host");
+        if (host === null) missing.push("主機製水量");
+        var dailyW = numOrNull("w_daily");
+        if (dailyW === null) missing.push("每日用量");
+        missing = missing.concat(d.missing.filter(function (m) { return m.indexOf("有效運轉") === 0; }));
+        return { missing: missing,
+          perVisit: Math.max(0.05, num("w_pervisit", 0.35)),
+          flow: parseFloat(raw("w_flow")) || 5,
+          changeSec: Math.max(0, num("w_change", 8)),
+          host: host === null ? 300 : host,
+          pipe: raw("w_pipe"), daily: dailyW === null ? d.users * d.perday : dailyW,
+          chill: raw("w_chill") };
+      }
+      function fountainCalc(d, f) {
+        var occ = (f.perVisit / f.flow) * 60 + f.changeSec;
+        var ports = Math.max(1, Math.ceil(d.peakPeople * occ / (d.peakMin * 60)));
+        var flowNeed = ports * f.flow;
+        var pf = PIPE_FLOW[f.pipe];
+        var flowOk = flowNeed <= pf.lo;
+        var peakVol = d.peakPeople * f.perVisit;
+        var refillPeak = f.host * (d.peakMin / 60);
+        var gap = Math.max(0, peakVol - refillPeak);
+        var tankSuggest = gap > 0 ? pickSize(TANK_SIZES, gap) : 0;
+        var refillInterval = f.host * (d.interval / 60);
+        var refillOk = refillInterval >= gap;
+        var daySupply = f.host * d.effHours;
+        var dayOk = daySupply >= f.daily;
+        var hostNeed = gap > 0 ? Math.ceil((gap / (d.interval / 60)) / 10) * 10 : f.host;
+        return { occ:occ, ports:ports, flowNeed:flowNeed, pipeLo:pf.lo, pipeHi:pf.hi, flowOk:flowOk,
+          peakVol:peakVol, refillPeak:refillPeak, gap:gap, tankSuggest:tankSuggest,
+          refillInterval:refillInterval, refillOk:refillOk, daySupply:daySupply, dayOk:dayOk, hostNeed:hostNeed };
+      }
+      function pipeRangeFor(flow) {
+        var keys = ["0.5","0.75","1","1.25"];
+        for (var i = 0; i < keys.length; i++) { var pf = PIPE_FLOW[keys[i]]; if (flow <= pf.hi) return PIPE_LABEL[keys[i]] + "（" + pf.lo + "–" + pf.hi + " L/min）"; }
+        return "1-1/4\" 以上";
+      }
+      function fountainHealth(d, f, w) {
+        var items = [];
+        items.push({ s: w.flowOk ? "ok" : "bad", t:"1 管徑流量", d:"需要口數 " + w.ports + " 口 × 每口 " + f.flow + " L/min ＝ " + fmt1(w.flowNeed) + " L/min，對照 " + PIPE_LABEL[f.pipe] + " 主管可供 " + w.pipeLo + "–" + w.pipeHi + " L/min（以流速 1.0 m/s 下限 " + w.pipeLo + " 從嚴判定）：" + (w.flowOk ? "足夠" : "不足。此流量需 " + pipeRangeFor(w.flowNeed) + " 等級主管（以下限從嚴判定時，若現管下限仍低於需求，須再上一級或分區供水）；正式設計須做壓降計算") + "。" });
+        items.push({ s: w.gap <= 0 ? "ok" : "warn", t:"2 水塔容量", d:"尖峰總出水量 " + fmt1(w.peakVol) + " L − 尖峰期間主機補水 " + fmt1(w.refillPeak) + " L ＝ 儲水缺口 " + fmt1(w.gap) + " L" + (w.gap > 0 ? "，有效可用儲水須 ≥ 缺口，建議水塔／壓力桶容量 " + fmt(w.tankSuggest) + " L（向上取整至常用級距）" : "，尖峰期間主機補水已足，無額外儲水缺口") + "。" });
+        items.push({ s: (w.refillOk && w.dayOk) ? "ok" : "bad", t:"3 補水恢復", d:"日量檢核：主機 " + fmt(f.host) + " L/h × 有效運轉 " + d.effHours + " h ＝ " + fmt(w.daySupply) + " L vs 全日用量 " + fmt(f.daily) + " L（" + (w.dayOk ? "通過" : "不足") + "）；間隔補水：主機 × " + d.interval + " 分鐘 ＝ " + fmt1(w.refillInterval) + " L vs 缺口 " + fmt1(w.gap) + " L（" + (w.refillOk ? "可補回" : "補不回") + "）。" + (!w.refillOk ? "建議加大主機至約 " + fmt(w.hostNeed) + " L/h，或加大水塔至約 " + fmt(w.tankSuggest) + " L 以上並錯開尖峰。" : "") });
+        items.push({ s:"warn", t:"4 排隊變異提醒", d:"口數 " + w.ports + " 口為理論最低口數，未含排隊變異：實際到達不均勻時會排隊，建議預留 1 口餘裕或以有效尖峰人次手調後重算（本工具不預設折扣）。" });
+        return items;
+      }
+      function fountainBOM(d, f, w) {
+        var items = [];
+        items.push({ name:"飲水台（多口連續出水）", spec:"口數 " + w.ports + " 口（理論最低，未含排隊變異），每口流量 " + f.flow + " L/min" + (f.chill === "yes" ? "；製冷型，製冷能力 30 L/h 參考（單一產品系列旁證）" : ""), qty:"1 座" });
+        items.push({ name:"主機（製水）", spec:"製水量 " + fmt(f.host) + " L/h" + (!w.refillOk ? "；補水檢核建議加大至約 " + fmt(w.hostNeed) + " L/h" : ""), qty:"1 台" });
+        if (w.tankSuggest > 0) items.push({ name:"水塔／壓力桶", spec:"有效可用儲水 ≥ 缺口 " + fmt1(w.gap) + " L，建議容量 " + fmt(w.tankSuggest) + " L", qty:"1 座" });
+        items.push({ name:"主管與分支管路", spec:"主管 " + PIPE_LABEL[f.pipe] + "（可供 " + w.pipeLo + "–" + w.pipeHi + " L/min，下限從嚴）；正式設計須做壓降計算", qty:"1 式" });
+        items.push({ name:"濾芯組", spec:"前置濾芯" + (d.route !== "general" ? "＋RO 膜" : "") + "，週期列入維護計畫", qty:"1 組" });
+        return items;
+      }
+
+/* ---------- 渲染 ---------- */
+var lastState = null;
+var TAG_TXT = { ok:"通過", warn:"注意", bad:"建議調整", unk:"待確認"};
+var TAG_TXT_ENG = { ok:"正常", warn:"注意", bad:"風險", unk:"待確認"};
+function healthHTML(h, eng) {
+var labels = eng? TAG_TXT_ENG: TAG_TXT;
+return h.map(function (it) {
+return '<li><span class="dot ' + it.s + '"></span><div><div class="t">' + it.t + '<span class="tag ' + it.s + '">' + labels[it.s] + '</span></div><div class="d">' + it.d + '</div></div></li>';
+}).join("");
+}
+function showIncomplete(missing) {
+var b = $("incompleteBanner");
+if (missing && missing.length) {
+b.classList.remove("hidden");
+$("incompleteDetail").textContent = "待輸入：" + missing.join("、") + "。";
+return true;
+}
+b.classList.add("hidden");
+return false;
+}
+function renderCross() {
+var cc = crossCheck(), el = $("crossBanner");
+if (!cc || MODE === "dispenser") { el.classList.add("hidden"); return;}
+el.classList.remove("hidden");
+var pct = Math.round(cc.D * 100);
+var adopted = MODE === "people"? "人數法": "工程法";
+if (cc.D <= 0.10) { el.className = "banner ok"; el.innerHTML = "交叉檢核：一致。人數法產水量 " + fmt(cc.a.required) + " LPH 與工程法 " + fmt(cc.b.required) + " LPH 差異 D＝" + pct + "%（≤10%）。<span class='small'>採用設計結論以" + adopted + "為準，另一法列為交叉檢核值。</span>";}
+else if (cc.D <= 0.25) { el.className = "banner warn"; el.innerHTML = "交叉檢核：請確認輸入。人數法產水量 " + fmt(cc.a.required) + " LPH 與工程法 " + fmt(cc.b.required) + " LPH 差異 D＝" + pct + "%（10%＜D≤25%）。<span class='small'>採用設計結論以" + adopted + "為準，另一法列為交叉檢核值。</span>";}
+else { el.className = "banner bad"; el.innerHTML = "交叉檢核：輸入不一致，暫不自動定案。人數法產水量 " + fmt(cc.a.required) + " LPH 與工程法 " + fmt(cc.b.required) + " LPH 差異 D＝" + pct + "%（＞25%）。<span class='small'>請先核對兩邊的日量與運轉時數輸入；下方仍列兩法數字供比對，不視為定案。</span>";}
+}
+function renderUnconfirmed(list) {
+var card = $("unconfirmedCard");
+if (list && list.length) {
+card.classList.remove("hidden");
+$("unconfirmedList").innerHTML = list.map(function (t) { return "<li>" + t + "——本案結果標示：初步建議，未完成現勘確認。</li>";}).join("");
+} else card.classList.add("hidden");
+}
+function bomDwHTML(items) {
+$("bomHead").innerHTML = "<tr><th>項次／設備</th><th>數量</th><th class='num'>價格</th></tr>";
+$("bomBody").innerHTML = items.map(function (it, i) {
+return "<tr><td><div class='item-name'>" + (i + 1) + ". " + it.name + "</div><div class='item-spec'>" + it.spec + "</div></td><td>" + it.qty + "</td><td class='num' style='font-family:inherit;white-space:normal'>依品牌型號另行報價</td></tr>";
+}).join("");
+$("bomFoot").innerHTML = "<tr><td colspan='3'>本清單不列金額：依品牌型號另行報價。</td></tr>";
+}
+
+function renderDw() {
+var d = readDw();
+var isFountain = (d.typeSel === "fountain") || (d.typeSel === "auto" && false);
+var w = dwCalc(d);
+var typeIsFountain = w.type === "fountain" || d.typeSel === "fountain";
+$("dwCard").classList.toggle("hidden", typeIsFountain);
+$("fountainCard").classList.toggle("hidden",!typeIsFountain);
+$("groupFountain").classList.toggle("hidden",!typeIsFountain);
+var unc = dwUnconfirmed(d);
+if (typeIsFountain) {
+var f = readFountain(d);
+var fw = fountainCalc(d, f);
+var fh = fountainHealth(d, f, fw);
+var fbom = fountainBOM(d, f, fw);
+var incomplete = showIncomplete(f.missing.length? f.missing: d.missing);
+lastState = { kind:"fountain", d:d, f:f, fw:fw, h:fh, bom:fbom, unc:unc,
+risks:["價格說明：飲水台清單不列金額，依品牌型號另行報價。", "口數為理論最低口數，未含排隊變異；現場到達不均勻時建議預留餘裕。", "主管流量以流速 1.0 m/s 下限值從嚴判定，正式設計須做壓降計算。", "下一步：確認主管管徑與水壓 → 確認水塔／壓力桶位置 → 依本建議書出正式報價。"],
+c:{ name: raw("f_name").trim() || "未命名案場", proposer: raw("f_proposer").trim()}};
+$("w_conclusion").textContent = incomplete? "未完成：關鍵欄位待輸入，暫不輸出定案數字。":
+"建議飲水台 " + fw.ports + " 口、主機 " + fmt(f.host) + " L/h、主管 " + PIPE_LABEL[f.pipe] + (fw.tankSuggest > 0? "、水塔／壓力桶 " + fmt(fw.tankSuggest) + " L": "") + (unc.length? "（初步建議，未完成現勘確認）": "") + "。";
+$("w_ports").textContent = incomplete? "—": fw.ports;
+$("w_ports_f").textContent = "每人占用 " + fmt1(fw.occ) + " 秒 ＝（" + f.perVisit + " ÷ " + f.flow + "）× 60 ＋ 換人 " + f.changeSec + " 秒；理論最低口數，未含排隊變異";
+$("w_flowneed").textContent = incomplete? "—": fmt1(fw.flowNeed);
+$("w_flowneed_f").textContent = PIPE_LABEL[f.pipe] + " 主管可供 " + fw.pipeLo + "–" + fw.pipeHi + " L/min（下限從嚴）：" + (fw.flowOk? "足夠": "不足");
+$("w_tank").textContent = incomplete? "—": fmt(fw.tankSuggest);
+$("w_tank_f").textContent = fw.gap > 0? "儲水缺口 " + fmt1(fw.gap) + " L，向上取整至常用級距": "無儲水缺口，可用小型壓力桶穩定壓力";
+$("w_occ").textContent = fmt1(fw.occ) + " 秒／人";
+$("w_peakvol").textContent = fmt1(fw.peakVol) + " L";
+$("w_gap").textContent = fmt1(fw.gap) + " L";
+$("w_refill").textContent = fmt1(fw.refillInterval) + " L／" + d.interval + " 分鐘";
+$("w_feedback").textContent = (!fw.refillOk ||!fw.dayOk)?
+"回饋：補水檢核未全數通過——建議加大主機至約 " + fmt(fw.hostNeed) + " L/h，或加大水塔至約 " + fmt(fw.tankSuggest) + " L 以上並錯開尖峰；日量檢核：" + (fw.dayOk? "通過": "主機 × 有效運轉時數 ＜ 全日用量，須加大主機或延長運轉") + "。":
+"回饋：三檢核全數通過——瞬間流量" + (fw.flowOk? "足夠": "仍不足，請加大主管管徑") + "、儲水缺口可由建議容量涵蓋、尖峰間隔 " + d.interval + " 分鐘內可補回、日量通過。";
+if (f.chill === "yes") $("w_feedback").textContent += " 製冷型另列：製冷能力 30 L/h 參考（單一產品系列旁證，個案請核對型錄）。";
+$("dwChecksTitle").textContent = "飲水台供給三檢核（點開看計算過程）";
+$("dwChecksSub").textContent = "需求側先定口數，供給側以瞬間流量、水塔容量、補水速度三檢核把關。";
+var checks = [
+{ t:"需求側・口數計算：需 " + fw.ports + " 口", calc:"每人占用秒數 ＝（每人次取水量 " + f.perVisit + " L ÷ 每口流量 " + f.flow + " L/min）× 60 ＋ 換人 " + f.changeSec + " 秒 ＝ " + fmt1(fw.occ) + " 秒\n需要口數 ＝ ceil（尖峰人次 " + d.peakPeople + " × " + fmt1(fw.occ) + " ÷（尖峰 " + d.peakMin + " 分鐘 × 60））＝ " + fw.ports + " 口（理論最低口數，未含排隊變異；有效尖峰人次可手調，本工具不預設折扣）"},
+{ t:"檢核 ①・瞬間流量：" + (fw.flowOk? "通過": "不足"), calc:"需要口數 " + fw.ports + " × 每口 " + f.flow + " ＝ " + fmt1(fw.flowNeed) + " L/min\n主管 " + PIPE_LABEL[f.pipe] + " 可供 " + fw.pipeLo + "–" + fw.pipeHi + " L/min，以流速 1.0 m/s 下限 " + fw.pipeLo + " L/min 從嚴判定 → " + (fw.flowOk? "足夠": "不足（差 " + fmt1(fw.flowNeed - fw.pipeLo) + " L/min），此流量需 " + pipeRangeFor(fw.flowNeed) + " 等級主管；參考：1/2\" 12–18、3/4\" 21–31、1\" 33–50 L/min") + "\n註：正式設計須做壓降計算。"},
+{ t:"檢核 ②・水塔容量：缺口 " + fmt1(fw.gap) + " L", calc:"尖峰總出水量 ＝ " + d.peakPeople + " 人次 × " + f.perVisit + " L ＝ " + fmt1(fw.peakVol) + " L\n尖峰期間主機補水 ＝ " + fmt(f.host) + " L/h ×（" + d.peakMin + " ÷ 60）＝ " + fmt1(fw.refillPeak) + " L\n儲水缺口 ＝ " + fmt1(fw.peakVol) + " − " + fmt1(fw.refillPeak) + " ＝ " + fmt1(fw.gap) + " L → 有效可用儲水須 ≥ 缺口，建議水塔／壓力桶 " + fmt(fw.tankSuggest) + " L（向上取整至常用級距）"},
+{ t:"檢核 ③・補水速度：" + ((fw.refillOk && fw.dayOk)? "通過": "不足"), calc:"日量：主機 " + fmt(f.host) + " L/h × 有效運轉 " + d.effHours + " h ＝ " + fmt(fw.daySupply) + " L vs 全日用量 " + fmt(f.daily) + " L → " + (fw.dayOk? "通過": "不足") + "\n間隔補水：主機 ×（" + d.interval + " ÷ 60）h ＝ " + fmt1(fw.refillInterval) + " L vs 儲水缺口 " + fmt1(fw.gap) + " L → " + (fw.refillOk? fw.gap > 0? d.interval + " 分鐘內可補回": "無缺口": "補不回") + (!fw.refillOk? "\n回饋：建議加大主機至約 " + fmt(fw.hostNeed) + " L/h（缺口 ÷ 間隔時數進位至十位），或加大水塔至約 " + fmt(fw.tankSuggest) + " L 以上。": "")}
+];
+$("dwChecks").innerHTML = checks.map(function (ck) { return '<details class="check"><summary>' + ck.t + '</summary><div class="calc">' + ck.calc + '</div></details>';}).join("");
+$("healthTitle").textContent = "飲水台健檢（四項）";
+$("healthSub").textContent = "管徑流量、水塔容量、補水恢復、排隊變異未含提醒。";
+$("healthList").innerHTML = healthHTML(fh, false);
+$("bomSub").textContent = "飲水台設備清單：只列品項、規格、數量，價格一律依品牌型號另行報價，不列金額。";
+bomDwHTML(fbom);
+$("bomNote").textContent = "";
+renderUnconfirmed(unc);
+$("riskList").innerHTML = lastState.risks.map(function (t) { return "<li>" + t + "</li>";}).join("");
+$("toast").textContent = "";
+renderCross();
+return;
+}
+/* 一般飲水機 */
+var h = dwHealth(d, w);
+var bom = dwBOM(d, w);
+var risks = dwRisks(d, w, h);
+var incomplete2 = showIncomplete(d.missing);
+lastState = { kind:"dw", d:d, w:w, h:h, bom:bom, risks:risks, unc:unc, c:{ name: raw("f_name").trim() || "未命名案場", proposer: raw("f_proposer").trim()}};
+$("d_route_hint").textContent = "地區預設路線：" + ({ general:"一般過濾", ro:"RO 逆滲透", roIsland:"RO 逆滲透（離島水源特殊，建議加強前置）"})[d.routeDefault] + "（" + d.city + "）；目前選擇：" + ({ general:"一般過濾", ro:"RO 逆滲透", roIsland:"RO 逆滲透（離島）"})[d.route] + "。";
+$("d_type_hint").textContent = d.typeSel === "auto"? ("自動建議：" + DW_TYPE_LABEL[w.auto.type] + "。" + w.auto.why): ("已指定：" + DW_TYPE_LABEL[w.type]);
+$("d_peak_hint").textContent = "場域預設比例：" + DW_VENUE_LABEL[d.venue] + " " + Math.round(DW_VENUE_PEAK[d.venue] * 100) + "%（切換場域或改人數時帶入，可直接改人次）";
+$("d_ratio_warn").style.display = (d.rsum!== 100)? "block": "none";
+var tierTxt = w.dailyUnits > 1? ("150 GPD 級距 × " + w.dailyUnits + " 組分流"): (w.tier.gal + " GPD 級距");
+$("dw_conclusion").textContent = incomplete2? "未完成：關鍵欄位待輸入，暫不輸出定案數字。":
+"建議裝設 " + (w.v220? "220V": "110V") + (d.power === "unknown"? "（暫估，未完成電源確認）": "") + " " + DW_TYPE_LABEL[w.type] + " " + w.count + " 台、" + ({ general:"一般過濾", ro:"RO 逆滲透", roIsland:"RO 逆滲透（離島加強前置）"})[d.route] + "、RO 額定造水量 " + tierTxt + (unc.length? "（初步建議，未完成現勘確認）": "") + "。";
+$("dw_count").textContent = incomplete2? "—": w.count;
+$("dw_count_f").textContent = "由" + w.driver + "決定（存量＋回補 " + w.peakUnits + "／日量 " + w.dailyUnits + "／分點 " + w.distUnits + " 台）";
+$("dw_capres").textContent = incomplete2? "—": w.capRes.text;
+$("dw_capres_f").textContent = w.capRes.f;
+$("dw_wait").textContent = incomplete2? "—": fmt1(w.digestMin);
+$("dw_wait_f").textContent = "假設：單口出水 1.5 L/min、換人 8 秒；每人占用 " + fmt1(w.occSec) + " 秒 × " + d.peakPeople + " 人次 ÷ " + w.count + " 台 ＝ 約 " + fmt1(w.digestMin) + " 分鐘消化尖峰" + (w.digestMin <= d.peakMin? "（在尖峰時段 " + d.peakMin + " 分鐘內）": "（超過尖峰時段 " + d.peakMin + " 分鐘，後到者需等候）");
+$("dw_daily").textContent = fmt(w.daily) + " L／日";
+$("dw_peakrate").textContent = fmt1(w.peakRate) + " L/h";
+$("dw_per").textContent = fmt1(w.per) + " 人／台";
+$("dw_tier").textContent = tierTxt;
+$("dw_ro_line").style.display = d.route === "general"? "none": "";
+if (d.route!== "general") $("dw_ro").textContent = fmt(w.roLPH) + " L/h";
+$("dw_bottleneck").textContent = "瓶頸說明：" + w.bottleneck.label + "路決定台數——" + (w.bottleneck.direct? ("直出流量檢核：需求 " + fmt1(w.bottleneck.demandFlow) + " L/min ÷ 單台 " + w.bottleneck.direct + " L/min ＝ 需 " + w.bottleneck.units + " 台"): ("尖峰需求量 " + fmt1(w.bottleneck.vd) + " L ÷ 單台尖峰可供量 " + fmt1(w.bottleneck.va) + " L（存量 " + fmt1(w.bottleneck.store) + "＋回補）＝ 需 " + w.bottleneck.units + " 台")) + "，為各路最大；每台平均服務 " + fmt1(w.per) + " 人。";
+$("dw_recovery").textContent = "恢復檢核：" + (w.recWorst? ("尖峰後瓶頸存量缺口約 " + fmt1(w.recWorst.draw) + " L（" + w.recWorst.road + "路），以連續產能回補約需 " + fmt1(w.recWorst.min) + " 分鐘，對照尖峰間隔 " + d.interval + " 分鐘：" + (w.recOk? "可於下一波尖峰前補回。": "下一波尖峰前存量補不回，建議增台或升級距。")): "無存量缺口。");
+var roadLines = w.roads.map(function (rd) {
+if (rd.direct) return rd.label + "路（直出流量檢核）：需求流量 ＝ " + d.peakPeople + " 人次 × " + d.peakQty + " L × " + Math.round(rd.frac * 100) + "% ÷ " + d.peakMin + " 分鐘 ＝ " + fmt1(rd.demandFlow) + " L/min；單台直出 " + rd.direct + " L/min → 進位需 " + rd.units + " 台";
+return rd.label + "路：尖峰需求量 Vd ＝ " + d.peakPeople + " × " + d.peakQty + " × " + Math.round(rd.frac * 100) + "% ＝ " + fmt1(rd.vd) + " L；單台尖峰可供量 Va ＝ 缸存量 " + fmt1(rd.store) + " L ＋ 產能 " + rd.cap + " L/h ×（" + d.peakMin + " ÷ 60）＝ " + fmt1(rd.va) + " L → 進位需 " + rd.units + " 台" + (rd.note? "（" + rd.note + "）": "");
+}).join("\n");
+$("dwChecksTitle").textContent = "四個檢核（點開看計算過程）";
+$("dwChecksSub").textContent = "最終台數 ＝ 存量＋回補、日量、分點三檢核最大值；瞬間流量檢核併入直出路呈現，另附恢復檢核。";
+var checks2 = [
+{ t:"檢核 1・存量＋回補（逐溫路）：需 " + w.peakUnits + " 台", calc: roadLines + "\n三路取最大 ＝ " + w.peakUnits + " 台（瓶頸：" + w.bottleneck.label + "路）。\n容量結果：" + w.capRes.f + "。"},
+{ t:"檢核 2・瞬間流量（直出路）：併入檢核 1", calc:"直出路（生飲溫／冷、廚下冷）不以存量計，改以流量檢核：需求流量 ＝ 尖峰人次 × 尖峰每人取水量 × 該路比例 ÷ 尖峰分鐘，對照單台直出 1.5 L/min，不足則增台（結果已併入檢核 1 各路台數）。\n落地／生飲的熱、冰路以檢核 1 為主，本檢核不另計台數。\n服務結果假設：單口出水 1.5 L/min、換人 8 秒，每人占用 " + fmt1(w.occSec) + " 秒，尖峰消化估算約 " + fmt1(w.digestMin) + " 分鐘。"},
+{ t:"檢核 3・日量與 RO 級距：需 " + w.dailyUnits + " 台（" + tierTxt + "）", calc:"日總量 ＝ 使用人數 " + d.users + " × 每人每日 " + d.perday + " L ＝ " + fmt(w.daily) + " L/日\n所需額定造水量 ＝ 日總量 ÷ 有效運轉時數 " + d.effHours + " h × 1.20 容量預留係數 × 24 h ＝ " + fmt(w.needRated) + " L/day\n對照 RO 額定造水量級距：60 GPD＝227、100 GPD＝379、150 GPD＝568 L/day → 選 " + tierTxt + "\n註：額定值為 24 小時標準條件造水量，與飲水機本體供水能力分開。" + (d.route!== "general"? "\nRO 回推產水 ＝ " + fmt(w.daily) + " ÷ " + d.effHours + " × 1.20 ＝ " + fmt(w.roLPH) + " L/h。": "\n一般過濾路線不需 RO 產水回推。")},
+{ t:"檢核 4・分點：需 " + w.distUnits + " 台", calc:"茶水間 " + d.rooms + " 間 × 每間至少 1 台 ＝ " + w.distUnits + " 台。\n＿＿＿＿\n最終台數 ＝ max（存量＋回補 " + w.peakUnits + "、日量 " + w.dailyUnits + "、分點 " + w.distUnits + "）＝ " + w.count + " 台，由" + w.driver + "決定。\n恢復檢核：尖峰後缺口約 " + (w.recWorst? fmt1(w.recWorst.draw): 0) + " L，回補約 " + (w.recWorst? fmt1(w.recWorst.min): 0) + " 分鐘 vs 間隔 " + d.interval + " 分鐘 → " + (w.recOk? "可補回": "補不回，建議增台或升級距") + "。" + (w.type === "under"? "\n廚下型提醒值：單台服務 20 人為提醒值，目前每台 " + fmt1(w.per) + " 人" + (w.per > 20? "，已超過，提醒增台或改落地型（不強制）": "，未超過") + "。": "")}
+];
+$("dwChecks").innerHTML = checks2.map(function (ck) { return '<details class="check"><summary>' + ck.t + '</summary><div class="calc">' + ck.calc + '</div></details>';}).join("");
+$("healthTitle").textContent = "飲水機健檢（十項）";
+$("healthSub").textContent = "逐項通過／注意／建議調整；進階現勘未填的項目顯示「待確認」，不臆測。";
+$("healthList").innerHTML = healthHTML(h, false);
+$("bomSub").textContent = "飲水機設備清單：只列品項、規格、數量，價格一律依品牌型號另行報價，不列金額。機型能力為業界平均設計基準，非單一品牌保證規格。";
+bomDwHTML(bom);
+$("bomNote").textContent = "";
+renderUnconfirmed(unc);
+$("riskList").innerHTML = risks.map(function (t) { return "<li>" + t + "</li>";}).join("");
+$("toast").textContent = "";
+renderCross();
+}
+
+function renderEng() {
+var isPeople = MODE === "people";
+var p = readCasePeople();
+var pm = isPeople? peopleCalc(p): null;
+var c = readCaseEng();
+if (isPeople) { c.daily = p.daily; c.hours = p.useHours; c.pattern = "peak";}
+var r = engCalc(c);
+var h = engHealth(c, r);
+var bom = engBOM(c, r, pm);
+var risks = engRisks(c, r, h);
+var cc = crossCheck();
+var conflict = cc && cc.D > 0.25 &&!isPeople? true: (cc && cc.D > 0.25);
+var incomplete = showIncomplete(isPeople? p.missing: c.missing);
+lastState = { kind:"eng", c:c, r:r, pm:pm, p:isPeople? p: null, h:h, bom:bom, risks:risks, cc:cc, incomplete:incomplete};
+$("sizingAdoptTag").textContent = isPeople? "交叉檢核值（採用結論在人數模式結論）": "採用設計結論（本模式）";
+$("m_required").textContent = incomplete? "—": fmt(r.required);
+$("m_required_f").textContent = fmt(c.daily) + " L ÷ " + c.hours + " h × 1.20 容量預留係數";
+$("m_ro").textContent = incomplete? "—": fmt(r.ro);
+$("m_ro_f").textContent = "標準規格取上一級，餘裕 " + Math.round(r.margin * 100) + "%（初期產水能力，未含膜衰減預留）";
+$("m_tank").textContent = incomplete? "—": fmt(r.tank);
+$("m_tank_f").textContent = "（尖峰用水速率 " + fmt(r.peakRate) + " − 產水速率 " + fmt(r.required) + "）× " + (c.peakDurMin / 60) + " h ＝ " + fmt(r.tankRaw) + " L，規格取上一級";
+$("m_recovery").textContent = r.rec!== null? Math.round(r.rec * 100) + "%（" + c.scr.why + "）": "不自動給定（" + c.scr.why + "）";
+$("m_cf").textContent = r.cf!== null? r.cf.toFixed(2): "—";
+$("m_feed").textContent = r.feedDay!== null? fmt(r.feedDay) + " L": "待回收率定案";
+$("m_conc").textContent = r.concDay!== null? fmt(r.concDay) + " L": "待回收率定案";
+$("m_head").textContent = r.headTotal!== null? fmt1(r.headTotal) + " m": "揚程未完成";
+$("m_head_f").textContent = r.headTotal!== null?
+"靜揚程 " + fmt1(r.staticHead) + " m（" + c.floors + " 樓 × " + c.floorH + " m）＋管損 " + fmt1(r.pipeLoss) + " m（簡式估算）＋設備壓損 " + fmt1(c.equipLoss) + " m＋末端殘壓 " + r.residual + " m（" + TERMINAL_LABEL[c.terminal] + "）；NPSH 需另行核對、不併入揚程":
+"靜揚程 " + fmt1(r.staticHead) + " m＋設備壓損 " + fmt1(c.equipLoss) + " m＋末端殘壓 " + r.residual + " m 已知；管長／管徑未輸入 → 管損未估，揚程未完成，不輸出泵型結論。NPSH 需另行核對。";
+$("engFountainNote").innerHTML = c.terminal === "fountain"?
+"<div class='banner warn' style='margin-top:14px'>末端型態：多口飲水台<span class='small'>已帶入飲水台檢核原則：無內部儲水、瞬時流量主導，末端殘壓以 20 m 計；設備清單已追加「大容量壓力桶或末端加壓泵（評估）」與「變頻恆壓與大幹管評估」。飲水台口數、管徑與儲水缺口的完整三檢核請切換至飲水機模式選「飲水台」計算。</span></div>": "";
+var pcard = $("peopleCard");
+if (pm) {
+pcard.classList.remove("hidden");
+$("pm_count").textContent = incomplete? "—": pm.count;
+$("pm_count_f").textContent = "取水點 " + p.points + " 處 · 每台服務約 " + Math.round(pm.per) + " 人";
+$("pm_type").textContent = pm.type.name;
+$("pm_type_f").textContent = "尖峰出水 " + pm.type.peakLPH + " LPH／台 × " + pm.count + " 台 ＝ " + fmt(pm.totalPeakLPH) + " LPH";
+$("pm_wait").textContent = pm.waitMin >= 1? String(Math.ceil(pm.waitMin)): "<1";
+$("pm_wait_f").textContent = "最後一杯約等 " + fmt(pm.waitSec) + " 秒：尖峰 " + p.peak + " 人 ÷ " + pm.count + " 台 × " + p.serveSec + " 秒／杯";
+$("pm_daily").textContent = fmt(c.daily) + " L／日";
+$("pm_peakrate").textContent = fmt(pm.peakRate) + " LPH";
+$("pm_peakvol").textContent = fmt(pm.peakVolume) + " L";
+var pnote = "對客戶的說法：尖峰時段最後一杯最多等約 " + (pm.waitMin >= 1? Math.ceil(pm.waitMin) + " 分鐘": Math.round(pm.waitSec) + " 秒") + "。日用水量 " + fmt(c.daily) + " L（平常 " + p.normal + " 人 × " + p.perday + " L，狀態：實際輸入＋系統換算）已接回下方工程計算作交叉檢核；尖峰集中時間 " + p.burstMin + " 分鐘為假設值（狀態：預設假設）。";
+if (p.peakIn < p.normal) pnote += "尖峰人數低於平常人數，已以平常人數 " + p.normal + " 人為尖峰基準。";
+if (conflict) pnote += "注意：與工程法差異 D＞25%，輸入不一致，暫不自動定案。";
+$("pm_note").textContent = pnote;
+} else pcard.classList.add("hidden");
+$("healthTitle").textContent = "RO 初步適用性八項健檢";
+$("healthSub").textContent = "初步適用性健檢，非飲用水合格判定。逐項綠／黃／紅三態，未填顯示「待確認」；紅燈項提示停止自動選型，需完整水質分析。";
+$("healthList").innerHTML = healthHTML(h, true);
+$("bomSub").textContent = "四層結構：必備核心／水質條件觸發／需求與末端觸發／現場施工，每品項附觸發原因。金額為展示估算區間（低／基準／高），估價基準日 " + c.basedate + "，單價來源狀態逐項標示（暫估品項已標示）。固定註記：展示估算，正式報價前以實際價格為準。未含項目：特殊管線、水電拉設、泥作、現場施工難度加給。";
+$("bomHead").innerHTML = "<tr><th>項次／設備</th><th>數量</th><th class='num'>展示估算區間（NT$，低／基準／高）</th></tr>";
+var layerName = { 1:"第一層・必備核心", 2:"第二層・水質條件觸發", 3:"第三層・需求與末端觸發", 4:"第四層・現場施工"};
+var html = "", lastLayer = 0;
+bom.items.forEach(function (it, i) {
+if (it.layer!== lastLayer) { html += "<tr class='layer-head'><td colspan='3'>" + layerName[it.layer] + "</td></tr>"; lastLayer = it.layer;}
+html += "<tr><td><div class='item-name'>" + (i + 1) + ". " + it.name + "</div><div class='item-spec'>" + it.spec + "</div><div class='item-spec'>觸發原因：" + it.why + "</div><div class='item-spec'>單價來源狀態：" + it.src + (it.src === "人工暫估"? "（暫估）": "") + "</div></td><td>" + it.qty + "</td><td class='num'>" + fmt(it.base * 0.85) + "／" + fmt(it.base) + "／" + fmt(it.base * 1.2) + "</td></tr>";
+});
+$("bomBody").innerHTML = html;
+$("bomFoot").innerHTML = "<tr><td colspan='2'>設備估算合計（未稅）</td><td class='num'>低 " + fmt(bom.lo) + "／基準 NT$ " + fmt(bom.base) + "／高 " + fmt(bom.hi) + "</td></tr>";
+$("bomNote").textContent = "展示估算，正式報價前以實際價格為準。未含項目：特殊管線、水電拉設、泥作、現場施工難度加給。估價基準日：" + c.basedate + "。";
+renderUnconfirmed([]);
+$("riskList").innerHTML = risks.map(function (t) { return "<li>" + t + "</li>";}).join("");
+$("toast").textContent = "";
+renderCross();
+}
+
+function render() { if (MODE === "dispenser") renderDw(); else renderEng();}
+
+/* ---------- 建議書 ---------- */
+function baseHead(lines, name, proposer) {
+lines.push("案場：" + name);
+lines.push("提案單位：" + (proposer || "—"));
+lines.push("日期：" + todayStr());
+lines.push("");
+}
+function proposalText() {
+var s = lastState, lines = [];
+if (s.kind === "fountain") {
+var d = s.d, f = s.f, w = s.fw;
+lines.push("飲水台選型建議書"); baseHead(lines, s.c.name, s.c.proposer);
+lines.push("（飲水機模式・飲水台子模組）");
+lines.push("建議飲水台 " + w.ports + " 口（理論最低口數，未含排隊變異）、主機製水量 " + fmt(f.host) + " L/h、主管 " + PIPE_LABEL[f.pipe] + (w.tankSuggest > 0? "、水塔／壓力桶建議 " + fmt(w.tankSuggest) + " L": "") + (s.unc.length? "；狀態：初步建議，未完成現勘確認": "") + "。");
+lines.push("");
+lines.push("一、案場條件（狀態標籤）");
+lines.push("・地點：" + d.city + "（地區預設路線：" + d.route + "）［預設假設］；場域：" + DW_VENUE_LABEL[d.venue]);
+lines.push("・使用人數：" + d.users + " 人［實際輸入］；尖峰人次：" + d.peakPeople + " 人次於 " + d.peakMin + " 分鐘內取水［實際輸入／預設假設］");
+lines.push("・每人次取水量：" + f.perVisit + " L；每口流量：" + f.flow + " L/min；換人時間：" + f.changeSec + " 秒；尖峰間隔：" + d.interval + " 分鐘");
+lines.push("・每日用量：" + fmt(f.daily) + " L［實際輸入／系統換算］；有效運轉時數：" + d.effHours + " 小時");
+lines.push("");
+lines.push("二、計算依據");
+lines.push("・每人占用秒數 ＝（" + f.perVisit + " ÷ " + f.flow + "）× 60 ＋ " + f.changeSec + " ＝ " + fmt1(w.occ) + " 秒");
+lines.push("・需要口數 ＝ ceil（" + d.peakPeople + " × " + fmt1(w.occ) + " ÷（" + d.peakMin + " × 60））＝ " + w.ports + " 口［系統換算］（理論最低口數，未含排隊變異）");
+lines.push("・檢核①瞬間流量：需求 " + fmt1(w.flowNeed) + " L/min vs " + PIPE_LABEL[f.pipe] + " 主管可供 " + w.pipeLo + "–" + w.pipeHi + " L/min（流速 1.0 m/s 下限從嚴）→ " + (w.flowOk? "足夠": "不足") + "；正式設計須做壓降計算");
+lines.push("・檢核②水塔容量：尖峰總出水 " + fmt1(w.peakVol) + " L − 尖峰期間補水 " + fmt1(w.refillPeak) + " L ＝ 缺口 " + fmt1(w.gap) + " L → 建議水塔／壓力桶 " + fmt(w.tankSuggest) + " L");
+lines.push("・檢核③補水速度：主機 × 有效運轉 ＝ " + fmt(w.daySupply) + " L vs 日量 " + fmt(f.daily) + " L → " + (w.dayOk? "通過": "不足") + "；間隔 " + d.interval + " 分鐘補水 " + fmt1(w.refillInterval) + " L vs 缺口 " + fmt1(w.gap) + " L → " + (w.refillOk? "可補回": "補不回，建議加大主機至約 " + fmt(w.hostNeed) + " L/h 或加大水塔至約 " + fmt(w.tankSuggest) + " L"));
+if (f.chill === "yes") lines.push("・製冷型：製冷能力 30 L/h 參考（單一產品系列旁證）");
+lines.push("");
+lines.push("三、健檢結果（四項）");
+s.h.forEach(function (it) { lines.push("・[" + TAG_TXT[it.s] + "] " + it.t + "：" + it.d);});
+lines.push("");
+lines.push("四、建議設備清單（只列品項、規格、數量；價格依品牌型號另行報價）");
+s.bom.forEach(function (it, i) { lines.push((i + 1) + ". " + it.name + "｜" + it.spec + "｜" + it.qty + "｜依品牌型號另行報價");});
+if (s.unc.length) { lines.push(""); lines.push("五、未確認資料"); s.unc.forEach(function (t) { lines.push("・" + t);}); lines.push("本案結果標示：初步建議，未完成現勘確認。");}
+lines.push(""); lines.push("註：本建議書為初步健檢與選型估算，正式規格與報價以現場勘查覆核後定案。口數為理論最低口數，未含排隊變異。");
+return lines.join("\n");
+}
+if (s.kind === "dw") {
+var dd = s.d, wd = s.w;
+var tierTxt = wd.dailyUnits > 1? ("150 GPD 級距 × " + wd.dailyUnits + " 組分流"): (wd.tier.gal + " GPD 級距");
+lines.push("飲水機選型建議書"); baseHead(lines, s.c.name, s.c.proposer);
+lines.push("（飲水機模式）");
+lines.push("建議裝設 " + (wd.v220? "220V": "110V") + (dd.power === "unknown"? "（暫估，未完成電源確認）": "") + " " + DW_TYPE_LABEL[wd.type] + " " + wd.count + " 台、" + ({ general:"一般過濾", ro:"RO 逆滲透", roIsland:"RO 逆滲透（離島加強前置）"})[dd.route] + "、RO 額定造水量 " + tierTxt + "，由" + wd.driver + "決定" + (s.unc.length? "；狀態：初步建議，未完成現勘確認": "") + "。");
+lines.push("容量結果：" + wd.capRes.text + "（" + wd.capRes.f + "）［系統換算］");
+lines.push("服務結果：尖峰消化估算約 " + fmt1(wd.digestMin) + " 分鐘（假設：單口出水 1.5 L/min、換人 8 秒）［系統換算］");
+lines.push("");
+lines.push("一、案場條件（狀態標籤）");
+lines.push("・地點：" + dd.city + "（水質路線：" + ({ general:"一般過濾", ro:"RO 逆滲透", roIsland:"RO 逆滲透（離島）"})[dd.route] + "，地區預設：" + dd.routeDefault + "）［預設假設，實際以現場水質為準］");
+lines.push("・場域：" + DW_VENUE_LABEL[dd.venue] + "；使用人數：" + dd.users + " 人［實際輸入］；茶水間：" + dd.rooms + " 間［實際輸入］");
+lines.push("・尖峰設定：尖峰人次 " + dd.peakPeople + " 人次於 " + dd.peakMin + " 分鐘內取水，每人 " + dd.peakQty + " L［實際輸入／預設假設］；溫型比例：熱 " + dd.ratios[0] + "%／溫 " + dd.ratios[1] + "%／冰 " + dd.ratios[2] + "%（模型推估，可調整）");
+lines.push("・電源條件：" + (dd.power === "v220"? "可提供 220V": dd.power === "v110"? "僅 110V": "不確定（以 110V 計算）［待確認］"));
+lines.push("・進階現勘：水壓 " + dd.pressure + "／排水 " + dd.drain + "／空間 " + dd.space + "／同迴路大電流 " + dd.bigload + "／假日停機 " + dd.holiday + "／尖峰間隔 " + dd.interval + " 分鐘");
+lines.push("");
+lines.push("二、計算依據（四檢核）");
+lines.push("・日量：日總量 ＝ " + dd.users + " 人 × " + dd.perday + " L ＝ " + fmt(wd.daily) + " L/日；所需額定造水量 ＝ ÷ " + dd.effHours + " h × 1.20 × 24 ＝ " + fmt(wd.needRated) + " L/day → " + tierTxt + "（額定值為 24 小時標準條件造水量，與飲水機本體供水能力分開）");
+wd.roads.forEach(function (rd) { lines.push("・" + rd.label + "路：" + (rd.direct? ("直出流量檢核：需求 " + fmt1(rd.demandFlow) + " L/min ÷ 單台 " + rd.direct + " L/min → 需 " + rd.units + " 台"): ("Vd ＝ " + fmt1(rd.vd) + " L；Va ＝ 存量 " + fmt1(rd.store) + " ＋ 產能 " + rd.cap + " ×（" + dd.peakMin + "÷60）＝ " + fmt1(rd.va) + " L → 需 " + rd.units + " 台")));});
+lines.push("・台數 ＝ max（存量＋回補 " + wd.peakUnits + "、日量 " + wd.dailyUnits + "、分點 " + wd.distUnits + "）＝ " + wd.count + " 台（" + wd.driver + "決定；瓶頸：" + wd.bottleneck.label + "路）");
+lines.push("・恢復檢核：尖峰後缺口約 " + (wd.recWorst? fmt1(wd.recWorst.draw): 0) + " L，回補約 " + (wd.recWorst? fmt1(wd.recWorst.min): 0) + " 分鐘 vs 間隔 " + dd.interval + " 分鐘 → " + (wd.recOk? "可補回": "補不回，建議增台或升級距"));
+lines.push("");
+lines.push("三、健檢結果（十項）");
+s.h.forEach(function (it) { lines.push("・[" + TAG_TXT[it.s] + "] " + it.t + "：" + it.d);});
+lines.push("");
+lines.push("四、建議設備清單（只列品項、規格、數量；價格依品牌型號另行報價）");
+s.bom.forEach(function (it, i) { lines.push((i + 1) + ". " + it.name + "｜" + it.spec + "｜" + it.qty + "｜依品牌型號另行報價");});
+lines.push("");
+lines.push("五、假設值清單");
+lines.push("・每人每日飲水量 " + dd.perday + " L（全日含訪客情境）；尖峰每人取水量 " + dd.peakQty + " L；機型能力為業界平均設計基準，非單一品牌保證規格");
+if (s.unc.length) { lines.push(""); lines.push("六、未確認資料"); s.unc.forEach(function (t) { lines.push("・" + t);}); lines.push("本案結果標示：初步建議，未完成現勘確認。");}
+lines.push(""); lines.push("註：本建議書為初步健檢與選型估算，正式規格與報價以現場勘查及水質、電源、給排水條件覆核後定案。");
+return lines.join("\n");
+}
+/* eng / people */
+var c = s.c, r = s.r;
+lines.push("案場選型健檢與建議書"); baseHead(lines, c.name, c.proposer);
+var cross = s.cc;
+if (s.pm) {
+lines.push("（人數模式）");
+lines.push("建議飲水機 " + s.pm.count + " 台（" + s.pm.type.name + "），每台服務約 " + Math.round(s.pm.per) + " 人；尖峰最多等候約 " + (s.pm.waitMin >= 1? Math.ceil(s.pm.waitMin) + " 分鐘": Math.round(s.pm.waitSec) + " 秒") + "。");
+lines.push("（工程法）所需產水速率 " + fmt(r.required) + " LPH、建議 RO " + fmt(r.ro) + " LPH、儲水 " + fmt(r.tank) + " L" + (cross? "；人數法產水量 " + fmt(cross.a.required) + " LPH vs 工程法 " + fmt(cross.b.required) + " LPH，差異 D＝" + Math.round(cross.D * 100) + "%（" + (cross.D <= 0.10? "一致": cross.D <= 0.25? "請確認輸入": "輸入不一致，暫不自動定案") + "）": "") + "。");
+} else {
+lines.push("（工程模式）");
+lines.push("所需產水速率 " + fmt(r.required) + " LPH［系統換算］，建議 RO 主機 " + fmt(r.ro) + " LPH［初步建議］、儲水 " + fmt(r.tank) + " L［初步建議］" + (cross? "；（人數法）產水量 " + fmt(cross.a.required) + " LPH，差異 D＝" + Math.round(cross.D * 100) + "%（" + (cross.D <= 0.10? "一致": cross.D <= 0.25? "請確認輸入": "輸入不一致，暫不自動定案") + "）": "") + "。");
+}
+lines.push("");
+lines.push("一、案場條件（狀態標籤）");
+if (s.p) lines.push("・人數條件：平常 " + s.p.normal + " 人［實際輸入］、尖峰 " + s.p.peak + " 人、取水點 " + s.p.points + " 處；人均日量 " + s.p.perday + " L［實際輸入／情境選項］（辦公在席情境，與飲水機模式 2.0 L 全日含訪客情境不同）；尖峰集中時間 " + s.p.burstMin + " 分鐘［預設假設］");
+lines.push("・每日用水量：" + fmt(c.daily) + " L／日［" + (s.p? "系統換算": "實際輸入") + "］，有效運轉 " + c.hours + " 小時，用水型態：" + PATTERN_LABEL[c.pattern] + "；末端型態：" + TERMINAL_LABEL[c.terminal]);
+lines.push("・目標水質：" + TARGET_LABEL[c.target]);
+lines.push("・原水：" + ({ tap:"自來水", well:"地下水／井水", recycle:"回收水", unknown:"來源不明"})[c.source] + "，TDS " + (c.tds!== null? fmt(c.tds): "待確認") + " mg/L，硬度 " + (c.hard!== null? fmt(c.hard): "待確認") + "，SDI " + (c.sdi!== null? c.sdi: "待確認") + "，餘氯：" + (c.chlorine === "yes"? "有": c.chlorine === "no"? "無": "未知"));
+lines.push("・供水樓高：" + c.floors + " 樓；迴水循環殺菌：" + (c.loop === "yes"? "需要": "不需要"));
+lines.push("");
+lines.push("二、選型計算");
+lines.push("・所需產水速率 ＝ " + fmt(c.daily) + " ÷ " + c.hours + " × 1.20 容量預留係數 ＝ " + fmt(r.required) + " LPH（初期產水能力，未含膜衰減預留；不與儲水裕度重複相乘）");
+lines.push("・建議 RO 主機：" + fmt(r.ro) + " LPH（" + (r.ro >= 250? "8040 膜 × " + r.membranes + " 支": "小型商用膜組") + "，低通量設計，餘裕 " + Math.round(r.margin * 100) + "%）");
+lines.push("・儲水需求 ＝（尖峰用水速率 " + fmt(r.peakRate) + " − 產水速率 " + fmt(r.required) + "）× 尖峰持續 " + (c.peakDurMin / 60) + " h ＝ " + fmt(r.tankRaw) + " L → 建議 " + fmt(r.tank) + " L");
+lines.push("・回收率初篩：" + (r.rec!== null? Math.round(r.rec * 100) + "%（" + c.scr.why + "），濃縮倍數 CF ＝ 1 ÷（1 − " + r.rec + "）＝ " + r.cf.toFixed(2) + "；濃水量 ＝ " + fmt(r.required) + " ×（1 − " + r.rec + "）÷ " + r.rec + " ＝ " + fmt(r.concRate) + " L/h，日濃水量 ＝ × " + c.hours + " h ＝ " + fmt(r.concDay) + " L": "不自動給定（" + c.scr.why + "）") + "。初篩建議，正式回收率須以完整水質確認。");
+lines.push("・揚程：" + (r.headTotal!== null? "靜揚程 " + fmt1(r.staticHead) + "＋管損 " + fmt1(r.pipeLoss) + "（簡式估算）＋設備壓損 " + fmt1(c.equipLoss) + "＋末端殘壓 " + r.residual + " ＝ " + fmt1(r.headTotal) + " m": "揚程未完成（管長／管徑未輸入，不輸出泵型結論）") + "；NPSH 需另行核對、不併入揚程");
+lines.push("");
+lines.push("三、RO 初步適用性八項健檢（非飲用水合格判定）");
+s.h.forEach(function (it) { lines.push("・[" + TAG_TXT_ENG[it.s] + "] " + it.t + "：" + it.d);});
+lines.push("");
+lines.push("四、建議設備清單（四層結構；金額為展示估算區間，估價基準日 " + c.basedate + "）");
+s.bom.items.forEach(function (it, i) { lines.push((i + 1) + ". [" + ({1:"必備核心",2:"水質條件觸發",3:"需求與末端觸發",4:"現場施工"})[it.layer] + "] " + it.name + "｜" + it.spec + "｜" + it.qty + "｜NT$ " + fmt(it.base * 0.85) + "–" + fmt(it.base * 1.2) + "（基準 " + fmt(it.base) + "）｜單價來源：" + it.src + "｜觸發原因：" + it.why);});
+lines.push("設備估算合計（未稅）：低 NT$ " + fmt(s.bom.lo) + "／基準 NT$ " + fmt(s.bom.base) + "／高 NT$ " + fmt(s.bom.hi));
+lines.push("展示估算，正式報價前以實際價格為準。未含項目：特殊管線、水電拉設、泥作、現場施工難度加給。");
+lines.push("");
+lines.push("五、風險提醒與下一步");
+s.risks.forEach(function (t) { lines.push("・" + t);});
+lines.push(""); lines.push("註：本建議書為初步健檢與選型估算，正式規格與報價以現場勘查及水質檢測覆核後定案。");
+return lines.join("\n");
+}
+function summaryText() {
+var s = lastState;
+if (s.kind === "fountain") return s.c.name + " 飲水台結論：建議 " + s.fw.ports + " 口（理論最低，未含排隊變異）、主機 " + fmt(s.f.host) + " L/h、主管 " + PIPE_LABEL[s.f.pipe] + "，瞬間流量 " + fmt1(s.fw.flowNeed) + " L/min（" + (s.fw.flowOk? "足夠": "不足") + "）、儲水缺口 " + fmt1(s.fw.gap) + " L、建議水塔／壓力桶 " + fmt(s.fw.tankSuggest) + " L" + (s.unc.length? "；初步建議，未完成現勘確認": "") + "；價格依品牌型號另行報價。";
+if (s.kind === "dw") { var dd = s.d, wd = s.w; var tt = wd.dailyUnits > 1? ("150 GPD × " + wd.dailyUnits): (wd.tier.gal + " GPD"); return s.c.name + " 飲水機結論：建議裝設 " + (wd.v220? "220V": "110V") + " " + DW_TYPE_LABEL[wd.type] + " " + wd.count + " 台、RO 額定造水量 " + tt + "；容量結果：" + wd.capRes.text + "，服務消化估算約 " + fmt1(wd.digestMin) + " 分鐘" + (s.unc.length? "；初步建議，未完成現勘確認": "") + "；價格依品牌型號另行報價。";}
+var c = s.c, r = s.r;
+var base = c.name + " 選型結論：每日 " + fmt(c.daily) + " L ÷ " + c.hours + " h × 1.20 → 需 " + fmt(r.required) + " LPH，建議 RO " + fmt(r.ro) + " LPH、儲水 " + fmt(r.tank) + " L、回收率" + (r.rec!== null? "初篩 " + Math.round(r.rec * 100) + "%": "不自動給定") + "；設備估算基準 NT$ " + fmt(s.bom.base) + "（未稅，展示估算區間）。";
+if (s.pm) return c.name + " 人數結論：平常 " + s.p.normal + " 人、尖峰 " + s.p.peak + " 人 → 建議 " + s.pm.count + " 台" + s.pm.type.name + "飲水機，日量 " + fmt(c.daily) + " L／日，尖峰最多等約 " + (s.pm.waitMin >= 1? Math.ceil(s.pm.waitMin) + " 分鐘": Math.round(s.pm.waitSec) + " 秒") + "；" + base;
+return base;
+}
+
+$("btnDownload").addEventListener("click", function () {
+var blob = new Blob([proposalText()], { type: "text/plain;charset=utf-8"});
+var url = URL.createObjectURL(blob);
+var a = document.createElement("a");
+a.href = url;
+a.download = (lastState.c? lastState.c.name: "案場") + "_選型建議書.txt";
+document.body.appendChild(a); a.click(); document.body.removeChild(a);
+setTimeout(function () { URL.revokeObjectURL(url);}, 2000);
+$("toast").textContent = "建議書已下載";
+});
+$("btnCopy").addEventListener("click", function () {
+var text = summaryText();
+function done() { $("toast").textContent = "會議摘要已複製";}
+if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { fallback();});
+else fallback();
+function fallback() {
+var ta = document.createElement("textarea");
+ta.value = text; document.body.appendChild(ta); ta.select();
+try { document.execCommand("copy"); done();} catch (e) { $("toast").textContent = "複製失敗，請改用下載建議書";}
+document.body.removeChild(ta);
+}
+});
+
+document.querySelectorAll("[data-preset]").forEach(function (btn) {
+btn.addEventListener("click", function () {
+var p = PRESETS[btn.getAttribute("data-preset")];
+if (!p) return;
+setMode("eng");
+$("f_name").value = p.name; $("f_industry").value = p.industry; $("f_source").value = p.source;
+$("f_daily").value = p.daily; $("f_hours").value = p.hours; $("f_pattern").value = p.pattern;
+$("f_target").value = p.target; $("f_tds").value = p.tds; $("f_chlorine").value = p.chlorine; $("f_floors").value = p.floors;
+$("f_loop").value = p.loop; $("f_backup").value = p.backup;
+render();
+$("toast").textContent = "已載入範例：" + p.name;
+});
+});
+
+function setMode(m) {
+MODE = m;
+$("modePeople").classList.toggle("active", m === "people");
+$("modeEng").classList.toggle("active", m === "eng");
+$("modeDw").classList.toggle("active", m === "dispenser");
+$("groupPeople").classList.toggle("hidden", m!== "people");
+$("groupDw").classList.toggle("hidden", m!== "dispenser");
+document.querySelectorAll(".shared-group").forEach(function (el) { el.classList.toggle("hidden", m === "dispenser");});
+document.querySelectorAll(".eng-only").forEach(function (el) { el.classList.toggle("hidden", m === "people");});
+$("sizingCard").classList.toggle("hidden", m === "dispenser");
+$("peopleCard").classList.toggle("hidden", m!== "people");
+$("dwCard").classList.toggle("hidden", m!== "dispenser");
+$("fountainCard").classList.add("hidden");
+$("groupFountain").classList.add("hidden");
+$("dwChecksCard").classList.toggle("hidden", m!== "dispenser");
+$("topPresets").classList.toggle("hidden", m === "dispenser");
+render();
+}
+$("modePeople").addEventListener("click", function () { setMode("people");});
+$("modeEng").addEventListener("click", function () { setMode("eng");});
+$("modeDw").addEventListener("click", function () { setMode("dispenser");});
+
+var PPRESETS = { office: { normal: 60, peak: 85, points: 2}, plant: { normal: 300, peak: 380, points: 4}};
+document.querySelectorAll("[data-ppreset]").forEach(function (btn) {
+btn.addEventListener("click", function () {
+var p = PPRESETS[btn.getAttribute("data-ppreset")];
+if (!p) return;
+setMode("people");
+$("p_normal").value = p.normal; $("p_peak").value = p.peak; $("p_points").value = p.points;
+render();
+$("toast").textContent = "已載入人數範例：平常 " + p.normal + " 人、尖峰 " + p.peak + " 人";
+});
+});
+
+/* 飲水機聯動：地點→路線預設；場域→比例/尖峰；人數→尖峰人次與飲水台日量 */
+var dwPeakManual = false, dwDailyManual = false;
+$("d_city").addEventListener("change", function () { $("d_route").value = dwRouteDefault(raw("d_city")); render();});
+$("d_venue").addEventListener("change", function () {
+var v = raw("d_venue"), r = DW_VENUE_RATIO[v];
+if (r) { $("d_rhot").value = r[0]; $("d_rwarm").value = r[1]; $("d_rice").value = r[2];}
+$("d_peakmin").value = DW_VENUE_PEAKMIN[v];
+var u = Math.max(1, Math.round(num("d_users", 50)));
+$("d_peakpeople").value = Math.max(1, Math.round(u * DW_VENUE_PEAK[v]));
+dwPeakManual = false;
+render();
+});
+$("p_scenario").addEventListener("change", function () { $("p_perday").value = raw("p_scenario"); render();});
+$("p_burstsel").addEventListener("change", function () { if (raw("p_burstsel")!== "custom") $("p_burstmin").value = raw("p_burstsel"); render();});
+$("d_peakpeople").addEventListener("input", function () { dwPeakManual = true;});
+$("w_daily").addEventListener("input", function () { dwDailyManual = true;});
+$("d_users").addEventListener("input", function () {
+var u = Math.max(1, Math.round(num("d_users", 50)));
+if (!dwPeakManual) $("d_peakpeople").value = Math.max(1, Math.round(u * DW_VENUE_PEAK[raw("d_venue")]));
+if (!dwDailyManual) $("w_daily").value = Math.round(u * Math.max(0.1, num("d_perday", 2.0)));
+});
+$("d_type").addEventListener("change", function () {
+if (raw("d_type") === "fountain" &&!dwDailyManual) { var u = Math.max(1, Math.round(num("d_users", 50))); $("w_daily").value = Math.round(u * 2.0);}
+render();
+});
+$("w_fromro").addEventListener("click", function () {
+var d = readDw(); var daily = Math.max(1, Math.round(num("w_daily", d.users * d.perday)));
+var lph = daily / d.effHours * 1.20;
+var gpd = lph * 24 / 3.785;
+var tier = DW_TIERS[DW_TIERS.length - 1];
+for (var i = 0; i < DW_TIERS.length; i++) { if (daily / d.effHours * 1.20 * 24 <= DW_TIERS[i].cap) { tier = DW_TIERS[i]; break;}}
+$("w_host").value = Math.round(tier.cap / 24 * 10) / 10 > 0? Math.round(lph): Math.round(lph);
+$("toast").textContent = "已依日量回推主機製水量約 " + fmt(lph) + " L/h（約 " + fmt(gpd) + " GPD，對應 " + tier.gal + " GPD 級距）";
+render();
+});
+
+$("caseForm").addEventListener("input", render);
+$("caseForm").addEventListener("change", render);
+$("caseForm").addEventListener("submit", function (e) { e.preventDefault();});
+
+$("f_basedate").value = todayStr();
+$("d_route").value = dwRouteDefault(raw("d_city"));
+setMode("people");
+</script>
+    <script>
+/* ===== chat layer (added on top; never modifies the original engine) =====
+   The chat only writes values into the original form fields and dispatches
+   the same input/change events a human would. Every number shown comes from
+   the original engine's own rendered outputs. */
+(function () {
+  "use strict";
+  function G(id) { return document.getElementById(id); }
+  var msgs = G("c_msgs"), chipsEl = G("c_chips"), inputRow = G("c_inputrow"),
+      inputEl = G("c_input"), sendBtn = G("c_send"), form = G("caseForm");
+
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function norm(s) { return String(s == null ? "" : s).replace(/\s+/g, " ").trim(); }
+  function scroll() { setTimeout(function () { window.scrollTo(0, document.body.scrollHeight); }, 30); }
+  function botSay(html) { var d = document.createElement("div"); d.className = "c-msg bot"; d.innerHTML = html; msgs.appendChild(d); scroll(); return d; }
+  function botText(t) { return botSay(esc(t).replace(/\n/g, "<br>")); }
+  function userSay(t) { var d = document.createElement("div"); d.className = "c-msg user"; d.textContent = t; msgs.appendChild(d); scroll(); }
+
+  /* ---- field metadata (label / hint / options) read from the original form ---- */
+  function meta(id) {
+    var el = G(id), lab = el ? el.closest("label") : null, label = id, hint = "";
+    if (lab) {
+      for (var i = 0; i < lab.childNodes.length; i++) {
+        var n = lab.childNodes[i];
+        if (n.nodeType === 3 && norm(n.textContent)) { label = norm(n.textContent); break; }
+      }
+      var h = lab.querySelector(".hint");
+      if (h) hint = norm(h.textContent);
+    }
+    return { label: label, hint: hint };
+  }
+  function options(id) {
+    var el = G(id), out = [];
+    if (el && el.tagName === "SELECT") for (var i = 0; i < el.options.length; i++) out.push({ v: el.options[i].value, t: norm(el.options[i].textContent) });
+    return out;
+  }
+  function setField(id, v) {
+    var el = G(id); if (!el) return;
+    el.value = v;
+    el.dispatchEvent(new Event(el.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+  }
+  function fireRender() { form.dispatchEvent(new Event("input", { bubbles: true })); }
+
+  /* ---- undo: snapshot of every form value + the engine's manual-override flags ---- */
+  function snapshot() {
+    var vals = {}, els = form.querySelectorAll("input,select,textarea");
+    for (var i = 0; i < els.length; i++) if (els[i].id) vals[els[i].id] = els[i].value;
+    return { vals: vals, pm: window.dwPeakManual, dm: window.dwDailyManual };
+  }
+  function restore(s) {
+    for (var k in s.vals) { var el = G(k); if (el) el.value = s.vals[k]; }
+    window.dwPeakManual = s.pm; window.dwDailyManual = s.dm;
+    fireRender();
+  }
+
+  /* ---- flow definitions (field order follows the original form) ---- */
+  function F(id, o) { var s = { kind: "field", id: id }; if (o) for (var k in o) s[k] = o[k]; return s; }
+  function GR(title, ids, optional) { return { kind: "group", title: title, ids: ids, optional: !!optional }; }
+  var COMMON = [F("f_name", { def: true }), F("f_proposer", { skip: true })];
+  var DW_ADV = GR("進階現勘（水壓／排水／空間／迴路／停機／尖峰間隔）", ["d_pressure", "d_drain", "d_space", "d_interval", "d_bigload", "d_holiday"], true);
+  var FOUNTAIN_TAIL = [
+    F("d_users", { required: true }), F("d_peakpeople", { def: true }), F("d_peakmin"), F("d_perday"), F("d_effhours"),
+    F("w_pervisit"), F("w_flow"), F("w_change"), F("w_host", { roBtn: true }), F("w_pipe"), F("w_daily", { def: true }), F("w_chill"),
+    DW_ADV
+  ];
+  var FLOWS = {
+    eng: { modeBtn: "modeEng", steps: COMMON.concat([
+      F("f_industry"), F("f_source"),
+      F("f_daily", { required: true }), F("f_hours"), F("f_pattern"), F("f_terminal"), F("f_peakdur"), F("f_target"),
+      F("f_tds"), F("f_chlorine"),
+      GR("進階水質（可不填，未填顯示待確認）", ["f_hard", "f_iron", "f_sdi", "f_alk", "f_ph", "f_silica", "f_mn", "f_turb"], true),
+      F("f_floors"), F("f_floorh"),
+      GR("進階揚程（管損估算，未輸入顯示揚程未完成）", ["f_pipelen", "f_pipedia", "f_equiploss"], true),
+      F("f_loop"), F("f_backup"), F("f_basedate", { def: true })
+    ]) },
+    dw: { modeBtn: "modeDw", steps: COMMON.concat([
+      F("d_city"), F("d_route", { def: true }), F("d_venue"), F("d_type"),
+      F("d_users", { required: true }), F("d_rooms"), F("d_peakpeople", { def: true }), F("d_peakmin"), F("d_perday"), F("d_peakqty"),
+      GR("溫型需求比例（%・合計須 100，模型推估，可調整）", ["d_rhot", "d_rwarm", "d_rice"], false),
+      F("d_power"), F("d_effhours"), DW_ADV
+    ]) },
+    fountain: { modeBtn: "modeDw", steps: COMMON.concat([
+      F("d_venue"), { kind: "action", fn: function () { setField("d_type", "fountain"); } }
+    ]).concat(FOUNTAIN_TAIL) }
+  };
+
+  var state = null; /* {domain, steps, idx, history:[{idx, snap}]} */
+  function clearChips() { chipsEl.innerHTML = ""; }
+  function addChip(text, cls, fn) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "c-chip" + (cls ? " " + cls : ""); b.textContent = text;
+    b.addEventListener("click", fn); chipsEl.appendChild(b); return b;
+  }
+  function utilChips() {
+    if (state && state.history.length) addChip("修改上一步", "util", undo);
+    if (state) addChip("重新開始", "util", startDomains);
+  }
+  function pushSnap() {
+    var h = state.history;
+    if (!h.length || h[h.length - 1].idx !== state.idx) h.push({ idx: state.idx, snap: snapshot() });
+  }
+  function undo() {
+    if (!state || !state.history.length) return;
+    var e = state.history.pop();
+    state.idx = e.idx;
+    restore(e.snap);
+    userSay("（修改上一步）");
+    resume();
+  }
+  function resume() {
+    if (state.idx >= state.steps.length) return finish();
+    var st = state.steps[state.idx];
+    if (st.kind === "action") { pushSnap(); st.fn(); state.idx++; return resume(); }
+    ask();
+  }
+  function startDomains() {
+    state = null; clearChips(); inputRow.style.display = "none";
+    botText("你好，我是選型助理。回答幾個問題，我就用選型引擎幫你算出建議設備清單、健檢結果與風險提醒，最後可以下載建議書。\n先選這次要算哪一類：");
+    addChip("飲水機", "", function () { userSay("飲水機"); begin("dw"); });
+    addChip("工程", "", function () { userSay("工程"); begin("eng"); });
+    addChip("噴泉（飲水台）", "", function () { userSay("噴泉（飲水台）"); begin("fountain"); });
+    scroll();
+  }
+  function begin(domain) {
+    var fl = FLOWS[domain];
+    G(fl.modeBtn).click(); /* same mode-switch handler as the original page */
+    state = { domain: domain, steps: fl.steps.slice(), idx: 0, history: [] };
+    botText(domain === "eng" ? "好，走工程模式。照順序問，有預設值的可以直接沿用。"
+      : domain === "dw" ? "好，走飲水機模式。照順序問，有預設值的可以直接沿用。"
+      : "好，走飲水台（多口連續出水）。照順序問，有預設值的可以直接沿用。");
+    resume();
+  }
+  function advance(userText) { userSay(userText); state.idx++; resume(); }
+
+  function ask() {
+    clearChips(); inputRow.style.display = "none";
+    var st = state.steps[state.idx];
+    if (st.kind === "group") return askGroup(st);
+    pushSnap();
+    var el = G(st.id), m = meta(st.id);
+    var q = "<b>" + esc(m.label) + "</b>";
+    if (m.hint) q += '<span class="c-hint">' + esc(m.hint) + "</span>";
+    botSay(q);
+    if (el.tagName === "SELECT") {
+      options(st.id).forEach(function (op) {
+        addChip(op.t, el.value === op.v ? "primary" : "", function () {
+          setField(st.id, op.v);
+          if (st.id === "d_type" && op.v === "fountain") return branchToFountain(op.t);
+          advance(op.t);
+        });
+      });
+    } else {
+      inputEl.type = el.type === "date" ? "date" : (el.type === "number" ? "number" : "text");
+      if (el.step) inputEl.step = el.step; else inputEl.removeAttribute("step");
+      inputEl.placeholder = el.placeholder || ("目前：" + el.value);
+      inputEl.value = "";
+      inputRow.style.display = "flex";
+      sendBtn.onclick = function () {
+        var v = inputEl.value.trim();
+        if (v === "") { botText("這一欄還沒填，請輸入，或用下方按鈕沿用預設值。"); return; }
+        if (el.type === "number") {
+          var nv = parseFloat(v);
+          if (isNaN(nv)) { botText("這一欄需要數字，請重新輸入。"); return; }
+          if (el.min !== "" && nv < parseFloat(el.min)) { botText("低於最小值 " + el.min + "，請重新輸入。"); return; }
+          if (el.max !== "" && nv > parseFloat(el.max)) { botText("高於最大值 " + el.max + "，請重新輸入。"); return; }
+        }
+        setField(st.id, v); inputEl.value = "";
+        advance(v);
+      };
+      inputEl.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); sendBtn.onclick(); } };
+      if (st.def && el.value !== "") addChip("用預設值（目前：" + el.value + "）", "primary", function () { advance("用預設值（" + el.value + "）"); });
+      if (st.skip) addChip("略過", "", function () { advance("（略過）"); });
+      if (st.roBtn) addChip("以 RO 級距帶入", "", function () {
+        G("w_fromro").click(); /* original button: fills w_host from the RO tier table */
+        botText("已依原工具的 RO 級距回推帶入，目前主機製水量為 " + G("w_host").value + " L/h。沿用或改數字都可以。");
+        ask();
+      });
+      setTimeout(function () { inputEl.focus(); }, 60);
+    }
+    utilChips(); scroll();
+  }
+
+  function branchToFountain(labelText) {
+    userSay(labelText);
+    /* replace the remaining dispenser steps with the fountain tail */
+    state.steps = state.steps.slice(0, state.idx + 1).concat(FOUNTAIN_TAIL);
+    state.idx++;
+    botText("改走飲水台子模組，接著問飲水台的用量與規格。");
+    resume();
+  }
+
+  function askGroup(st) {
+    pushSnap();
+    clearChips(); inputRow.style.display = "none";
+    var d = botSay("<b>" + esc(st.title) + "</b>");
+    var box = document.createElement("div"); box.className = "c-group";
+    var row = document.createElement("div"); row.className = "c-grow"; box.appendChild(row);
+    st.ids.forEach(function (id) {
+      var el = G(id), m = meta(id);
+      var lab = document.createElement("label");
+      lab.appendChild(document.createTextNode(m.label));
+      var ctrl;
+      if (el.tagName === "SELECT") {
+        ctrl = document.createElement("select");
+        options(id).forEach(function (op) {
+          var o = document.createElement("option"); o.value = op.v; o.textContent = op.t; ctrl.appendChild(o);
+        });
+        ctrl.value = el.value;
+      } else {
+        ctrl = document.createElement("input");
+        ctrl.type = el.type === "number" ? "number" : "text";
+        if (el.step) ctrl.step = el.step;
+        if (el.placeholder) ctrl.placeholder = el.placeholder;
+        ctrl.value = el.value;
+      }
+      ctrl.setAttribute("data-fid", id);
+      lab.appendChild(ctrl);
+      if (m.hint) { var hs = document.createElement("span"); hs.className = "hint"; hs.textContent = m.hint; lab.appendChild(hs); }
+      row.appendChild(lab);
+    });
+    var btns = document.createElement("div"); btns.className = "c-gbtns";
+    var ok = document.createElement("button"); ok.type = "button"; ok.className = "c-chip primary"; ok.textContent = "確認本組";
+    ok.addEventListener("click", function () {
+      var ctrls = box.querySelectorAll("[data-fid]"), bad = null;
+      for (var i = 0; i < ctrls.length; i++) {
+        var el2 = G(ctrls[i].getAttribute("data-fid"));
+        if (el2.type === "number" && ctrls[i].value.trim() !== "" && isNaN(parseFloat(ctrls[i].value))) bad = ctrls[i];
+      }
+      if (bad) { botText("本組有一欄不是數字，請修正後再確認。"); bad.focus(); return; }
+      for (var j = 0; j < ctrls.length; j++) setField(ctrls[j].getAttribute("data-fid"), ctrls[j].value);
+      box.querySelectorAll("input,select,button").forEach(function (x) { x.disabled = true; });
+      advance("（本組已確認）");
+    });
+    btns.appendChild(ok);
+    if (st.optional) {
+      var sk = document.createElement("button"); sk.type = "button"; sk.className = "c-chip"; sk.textContent = "略過本組（用目前設定）";
+      sk.addEventListener("click", function () {
+        box.querySelectorAll("input,select,button").forEach(function (x) { x.disabled = true; });
+        advance("（略過本組）");
+      });
+      btns.appendChild(sk);
+    }
+    box.appendChild(btns);
+    d.appendChild(box);
+    utilChips(); scroll();
+  }
+
+  /* ---- results: read ONLY the original engine's rendered DOM ---- */
+  function T(id) { var el = G(id); return el ? norm(el.textContent) : ""; }
+  function visible(id) { var el = G(id); return el && !el.classList.contains("hidden"); }
+  function rows(tbodyId) {
+    var tb = G(tbodyId), out = [];
+    if (!tb) return out;
+    tb.querySelectorAll("tr").forEach(function (tr) {
+      var cells = [];
+      tr.querySelectorAll("td,th").forEach(function (td) { var t = norm(td.textContent); if (t) cells.push(t); });
+      if (cells.length) out.push(cells.join("｜"));
+    });
+    return out;
+  }
+  function items(ulId) {
+    var ul = G(ulId), out = [];
+    if (!ul) return out;
+    ul.querySelectorAll(":scope > li").forEach(function (li) { var t = norm(li.textContent); if (t) out.push(t); });
+    return out;
+  }
+  function sec(title, bodyHtml) { return '<div class="c-sec">' + esc(title) + "</div>" + bodyHtml; }
+  function linesPre(arr) { return "<pre>" + esc(arr.join("\n")) + "</pre>"; }
+  function checksHtml() {
+    var box = G("dwChecks"), out = "";
+    if (!box) return out;
+    box.querySelectorAll("details.check").forEach(function (dt) {
+      var s = dt.querySelector("summary"), c = dt.querySelector(".calc");
+      out += "<details><summary>" + esc(s ? norm(s.textContent) : "檢核") + "</summary><pre>" + esc(c ? c.textContent.trim() : "") + "</pre></details>";
+    });
+    return out;
+  }
+
+  function finish() {
+    clearChips(); inputRow.style.display = "none";
+    fireRender(); /* the original page recalculates on form input events */
+    var html = "";
+    if (visible("incompleteBanner")) html += sec("未完成", "<pre>" + esc(T("incompleteBanner")) + "</pre>");
+    if (visible("crossBanner") && T("crossBanner")) html += sec("交叉檢核", "<pre>" + esc(T("crossBanner")) + "</pre>");
+    var isFountain = visible("fountainCard");
+    if (state.domain === "eng") {
+      html += sec("選型計算（採用設計結論）", linesPre([
+        "所需產水速率：" + T("m_required") + " LPH（" + T("m_required_f") + "）",
+        "建議 RO 主機規格：" + T("m_ro") + " LPH（" + T("m_ro_f") + "）",
+        "建議儲水容量：" + T("m_tank") + " L（" + T("m_tank_f") + "）",
+        "初篩回收率：" + T("m_recovery"),
+        "濃縮倍數 CF：" + T("m_cf"),
+        "每日進水量約：" + T("m_feed") + "；每日濃水排放約：" + T("m_conc"),
+        "總揚程：" + T("m_head") + "（" + T("m_head_f") + "）"
+      ]));
+      if (T("engFountainNote")) html += "<pre>" + esc(T("engFountainNote")) + "</pre>";
+    } else if (isFountain) {
+      html += sec("飲水台結論", "<pre>" + esc(T("w_conclusion")) + "</pre>");
+      html += sec("關鍵數字", linesPre([
+        "需要口數（理論最低）：" + T("w_ports") + " 口（" + T("w_ports_f") + "）",
+        "瞬間流量需求：" + T("w_flowneed") + " L/min（" + T("w_flowneed_f") + "）",
+        "建議水塔／壓力桶容量：" + T("w_tank") + " L（" + T("w_tank_f") + "）",
+        "每人占用：" + T("w_occ") + "；尖峰總出水量：" + T("w_peakvol") + "；儲水缺口：" + T("w_gap") + "；間隔內補水：" + T("w_refill"),
+        T("w_feedback")
+      ]));
+      var ck = checksHtml(); if (ck) html += sec(T("dwChecksTitle") || "檢核明細", ck);
+    } else {
+      html += sec("飲水機結論", "<pre>" + esc(T("dw_conclusion")) + "</pre>");
+      html += sec("關鍵數字", linesPre([
+        "建議台數（最終）：" + T("dw_count") + " 台（" + T("dw_count_f") + "）",
+        "容量結果：" + T("dw_capres") + "（" + T("dw_capres_f") + "）",
+        "服務結果（尖峰消化估算）：" + T("dw_wait") + " 分鐘（" + T("dw_wait_f") + "）",
+        "日總量：" + T("dw_daily") + "；尖峰需求率：" + T("dw_peakrate") + "；每台平均服務：" + T("dw_per"),
+        "RO 額定造水量級距：" + T("dw_tier"),
+        T("dw_bottleneck"), T("dw_recovery")
+      ]));
+      var ck2 = checksHtml(); if (ck2) html += sec(T("dwChecksTitle") || "檢核明細", ck2);
+    }
+    var hl = items("healthList");
+    if (hl.length) html += sec(T("healthTitle") || "健檢結果", linesPre(hl.map(function (t) { return "・" + t; })));
+    var bom = rows("bomBody");
+    if (bom.length) {
+      var foot = rows("bomFoot");
+      html += sec("建議設備清單", linesPre(bom.concat(foot)));
+      if (T("bomNote")) html += "<pre>" + esc(T("bomNote")) + "</pre>";
+    }
+    if (visible("unconfirmedCard")) {
+      var unc = items("unconfirmedList");
+      if (unc.length) html += sec("未確認資料", linesPre(unc.map(function (t) { return "・" + t; })));
+    }
+    var rk = items("riskList");
+    if (rk.length) html += sec("風險提醒與進場前必辦", linesPre(rk.map(function (t) { return "・" + t; })));
+    botSay(html);
+    botText("以上是引擎算出的結果。可以下載建議書或複製會議摘要帶著走；想改條件，用「修改上一步」往回修。");
+    addChip("下載建議書（.txt）", "primary", function () {
+      G("btnDownload").click(); /* original download handler */
+      setTimeout(function () { botText(T("toast") || "建議書已下載"); }, 300);
+    });
+    addChip("複製會議摘要", "", function () {
+      G("btnCopy").click(); /* original copy handler */
+      setTimeout(function () { botText(T("toast") || "已複製"); }, 400);
+    });
+    utilChips();
+    addChip("全部清空重來", "util", function () { location.reload(); });
+    scroll();
+  }
+
+  startDomains();
+})();
+    </script>
+
+
+<script>
+/* LIFF 包裝層（與選型引擎無關）：填入 LIFF ID 後，在 LINE 內開啟時自動初始化；
+   未填 ID 或在一般瀏覽器開啟時，本頁照常以純網頁模式運作。 */
+window.LIFF_ID = ""; /* ← 在 LINE Developers Console 註冊後，把 LIFF ID 填在這裡 */
+window.__IN_LINE__ = false;
+(function () {
+  if (!window.LIFF_ID || typeof liff === "undefined") return;
+  liff.init({ liffId: window.LIFF_ID }).then(function () {
+    window.__IN_LINE__ = liff.isInClient();
+  }).catch(function () { /* 初始化失敗時退回一般網頁模式，不阻斷使用 */ });
+})();
+</script>
+</body>
+</html>
