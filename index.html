@@ -2160,11 +2160,35 @@ setMode("people");
     var rk = items("riskList");
     if (rk.length) html += sec("風險提醒與進場前必辦", linesPre(rk.map(function (t) { return "・" + t; })));
     botSay(html);
-    botText("以上是引擎算出的結果。可以下載建議書或複製會議摘要帶著走；想改條件，用「修改上一步」往回修。");
-    addChip("下載建議書（.txt）", "primary", function () {
-      G("btnDownload").click(); /* original download handler */
-      setTimeout(function () { botText(T("toast") || "建議書已下載"); }, 300);
-    });
+    function inLineEnv() { return (window.__IN_LINE__ === true) || /Line\//i.test(navigator.userAgent || ""); }
+    function copyFullProposal() {
+      var text = "";
+      try { text = String(proposalText()); } catch (e) { text = ""; }
+      if (!text) { botText("全文產生失敗，請改用下面的「複製會議摘要」。"); return; }
+      function done() { botText("完整建議書已複製（全文 " + text.length + " 字），貼到筆記、信箱或聊天室就能保存。"); }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        var ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        if (ok) { done(); return; }
+        botSay("<pre>" + esc(text) + "</pre>");
+        botText("自動複製沒成功，我把建議書全文貼在上面了，長按選取全文就能複製。");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+      else fallback();
+    }
+    if (inLineEnv()) {
+      botText("以上是引擎算出的結果。你現在在 LINE 裡面，LINE 不能下載檔案，所以改成「複製完整建議書」把全文帶走；想改條件，用「修改上一步」往回修。");
+      addChip("複製完整建議書", "primary", copyFullProposal);
+    } else {
+      botText("以上是引擎算出的結果。可以下載建議書或複製會議摘要帶著走；想改條件，用「修改上一步」往回修。");
+      addChip("下載建議書（.txt）", "primary", function () {
+        G("btnDownload").click(); /* original download handler */
+        setTimeout(function () { botText(T("toast") || "建議書已下載"); }, 300);
+      });
+    }
     addChip("複製會議摘要", "", function () {
       G("btnCopy").click(); /* original copy handler */
       setTimeout(function () { botText(T("toast") || "已複製"); }, 400);
