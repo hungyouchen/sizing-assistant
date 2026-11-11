@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
-    <title>選型助理</title>
+    <title>飲水系統助理</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
@@ -203,7 +203,7 @@ body{background:var(--bg)}
       <div class="c-head">
         <div class="c-logo">選</div>
         <div>
-          <h1>選型助理</h1>
+          <h1>飲水系統助理</h1>
           <div class="c-sub">對話式選型：回答問題，其餘交給選型引擎計算</div>
         </div>
       </div>
@@ -1977,10 +1977,10 @@ setMode("people");
   }
   function startDomains() {
     state = null; clearChips(); inputRow.style.display = "none";
-    botText("你好，我是選型助理。回答幾個問題，我就用選型引擎幫你算出建議設備清單、健檢結果與風險提醒，最後可以下載建議書。\n先選這次要算哪一類：");
+    botText("你好，我是飲水系統助理。回答幾個問題，我就用選型引擎幫你算出建議設備清單、健檢結果與風險提醒，最後可以下載建議書。\n先選這次要算哪一類：");
     addChip("飲水機", "", function () { userSay("飲水機"); begin("dw"); });
     addChip("工程", "", function () { userSay("工程"); begin("eng"); });
-    addChip("噴泉（飲水台）", "", function () { userSay("噴泉（飲水台）"); begin("fountain"); });
+    addChip("飲水台", "", function () { userSay("飲水台"); begin("fountain"); });
     scroll();
   }
   function begin(domain) {
