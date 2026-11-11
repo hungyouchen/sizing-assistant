@@ -171,6 +171,30 @@ body{background:var(--bg)}
 .c-group .c-grow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media (max-width:560px){.c-group .c-grow{grid-template-columns:1fr}}
 .c-gbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+#reportView{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.rv-top{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.rv-title{font-weight:900;font-size:17px}
+.rv-inner{max-width:760px;margin:0 auto;padding:16px 14px 8px}
+.rv-meta{font-size:12.5px;color:var(--ink-2);margin-bottom:8px}
+.rv-hero{background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:16px;font-size:16.5px;font-weight:700;line-height:1.65}
+.rv-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.rv-stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;box-shadow:var(--shadow)}
+.rv-stat-k{font-size:12px;color:var(--ink-2);font-weight:700}
+.rv-stat-v{font-size:15.5px;font-weight:900;margin-top:2px;line-height:1.45;word-break:break-word}
+.rv-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:12px;box-shadow:var(--shadow)}
+.rv-h{font-weight:900;margin-bottom:8px}
+.rv-row{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.rv-row:last-child{border-bottom:none}
+.rv-name{flex:1}
+.rv-cell{font-weight:700;white-space:nowrap}
+.rv-foot{font-weight:900}
+.rv-note{font-size:12.5px;color:var(--ink-2);margin-top:8px;line-height:1.55}
+.rv-list{margin:0;padding-left:19px;font-size:14px;line-height:1.65}
+.rv-risk{border-left:4px solid #d97706}
+.rv-muted{color:var(--ink-2)}
+.rv-foot-note{font-size:12px;color:var(--ink-2);margin:14px 2px 4px;line-height:1.6}
+.rv-actions{max-width:760px;margin:0 auto;padding:6px 14px 26px;display:flex;gap:8px;flex-wrap:wrap}
+@media print{.c-app{display:none!important}#reportView{position:static;overflow:visible}.rv-actions{display:none}.rv-top{position:static}}
     </style>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
@@ -188,6 +212,15 @@ body{background:var(--bg)}
       <div class="c-inputrow" id="c_inputrow" style="display:none">
         <input id="c_input" type="text" autocomplete="off" />
         <button type="button" id="c_send">送出</button>
+      </div>
+    </div>
+
+    <div id="reportView" style="display:none">
+      <div class="rv-top"><div class="rv-title">重點報告</div><button type="button" id="rvClose" class="c-chip util">關閉 ✕</button></div>
+      <div class="rv-inner" id="rvInner"></div>
+      <div class="rv-actions">
+        <button type="button" id="rvCopy" class="c-chip primary">複製重點摘要</button>
+        <button type="button" id="rvPrint" class="c-chip">列印／存 PDF</button>
       </div>
     </div>
 
@@ -2112,8 +2145,9 @@ setMode("people");
     if (visible("incompleteBanner")) html += sec("未完成", "<pre>" + esc(T("incompleteBanner")) + "</pre>");
     if (visible("crossBanner") && T("crossBanner")) html += sec("交叉檢核", "<pre>" + esc(T("crossBanner")) + "</pre>");
     var isFountain = visible("fountainCard");
+    var statLines = [];
     if (state.domain === "eng") {
-      html += sec("選型計算（採用設計結論）", linesPre([
+      statLines = [
         "所需產水速率：" + T("m_required") + " LPH（" + T("m_required_f") + "）",
         "建議 RO 主機規格：" + T("m_ro") + " LPH（" + T("m_ro_f") + "）",
         "建議儲水容量：" + T("m_tank") + " L（" + T("m_tank_f") + "）",
@@ -2121,28 +2155,31 @@ setMode("people");
         "濃縮倍數 CF：" + T("m_cf"),
         "每日進水量約：" + T("m_feed") + "；每日濃水排放約：" + T("m_conc"),
         "總揚程：" + T("m_head") + "（" + T("m_head_f") + "）"
-      ]));
+      ];
+      html += sec("選型計算（採用設計結論）", linesPre(statLines));
       if (T("engFountainNote")) html += "<pre>" + esc(T("engFountainNote")) + "</pre>";
     } else if (isFountain) {
       html += sec("飲水台結論", "<pre>" + esc(T("w_conclusion")) + "</pre>");
-      html += sec("關鍵數字", linesPre([
+      statLines = [
         "需要口數（理論最低）：" + T("w_ports") + " 口（" + T("w_ports_f") + "）",
         "瞬間流量需求：" + T("w_flowneed") + " L/min（" + T("w_flowneed_f") + "）",
         "建議水塔／壓力桶容量：" + T("w_tank") + " L（" + T("w_tank_f") + "）",
         "每人占用：" + T("w_occ") + "；尖峰總出水量：" + T("w_peakvol") + "；儲水缺口：" + T("w_gap") + "；間隔內補水：" + T("w_refill"),
         T("w_feedback")
-      ]));
+      ];
+      html += sec("關鍵數字", linesPre(statLines));
       var ck = checksHtml(); if (ck) html += sec(T("dwChecksTitle") || "檢核明細", ck);
     } else {
       html += sec("飲水機結論", "<pre>" + esc(T("dw_conclusion")) + "</pre>");
-      html += sec("關鍵數字", linesPre([
+      statLines = [
         "建議台數（最終）：" + T("dw_count") + " 台（" + T("dw_count_f") + "）",
         "容量結果：" + T("dw_capres") + "（" + T("dw_capres_f") + "）",
         "服務結果（尖峰消化估算）：" + T("dw_wait") + " 分鐘（" + T("dw_wait_f") + "）",
         "日總量：" + T("dw_daily") + "；尖峰需求率：" + T("dw_peakrate") + "；每台平均服務：" + T("dw_per"),
         "RO 額定造水量級距：" + T("dw_tier"),
         T("dw_bottleneck"), T("dw_recovery")
-      ]));
+      ];
+      html += sec("關鍵數字", linesPre(statLines));
       var ck2 = checksHtml(); if (ck2) html += sec(T("dwChecksTitle") || "檢核明細", ck2);
     }
     var hl = items("healthList");
@@ -2160,6 +2197,12 @@ setMode("people");
     var rk = items("riskList");
     if (rk.length) html += sec("風險提醒與進場前必辦", linesPre(rk.map(function (t) { return "・" + t; })));
     botSay(html);
+    var report = { mode: state.domain === "eng" ? "工程選型" : (isFountain ? "飲水台選型" : "飲水機選型"),
+      date: (function () { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })(),
+      summary: "", stats: statLines, bom: bom, foot: (typeof foot !== "undefined" && foot) ? foot : [], bomNote: T("bomNote"),
+      health: hl, risks: rk, unc: (typeof unc !== "undefined" && unc) ? unc : [] };
+    try { report.summary = String(summaryText()); } catch (e) { report.summary = ""; }
+    window.__lastReport = report;
     function inLineEnv() { return (window.__IN_LINE__ === true) || /Line\//i.test(navigator.userAgent || ""); }
     function copyFullProposal() {
       var text = "";
@@ -2179,12 +2222,13 @@ setMode("people");
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
       else fallback();
     }
+    addChip("看重點報告", "primary", function () { openReport(); });
     if (inLineEnv()) {
-      botText("以上是引擎算出的結果。你現在在 LINE 裡面，LINE 不能下載檔案，所以改成「複製完整建議書」把全文帶走；想改條件，用「修改上一步」往回修。");
-      addChip("複製完整建議書", "primary", copyFullProposal);
+      botText("以上是引擎算出的結果。「看重點報告」是設計版的一頁重點；LINE 裡不能下載檔案，完整版改用「複製完整建議書」帶走；想改條件，用「修改上一步」往回修。");
+      addChip("複製完整建議書", "", copyFullProposal);
     } else {
-      botText("以上是引擎算出的結果。可以下載建議書或複製會議摘要帶著走；想改條件，用「修改上一步」往回修。");
-      addChip("下載建議書（.txt）", "primary", function () {
+      botText("以上是引擎算出的結果。「看重點報告」是設計版的一頁重點，完整版可以下載 .txt 帶著走；想改條件，用「修改上一步」往回修。");
+      addChip("下載完整建議書（.txt）", "", function () {
         G("btnDownload").click(); /* original download handler */
         setTimeout(function () { botText(T("toast") || "建議書已下載"); }, 300);
       });
@@ -2197,6 +2241,63 @@ setMode("people");
     addChip("全部清空重來", "util", function () { location.reload(); });
     scroll();
   }
+
+  /* ===== 重點報告（設計版一頁） ===== */
+  function statSplit(line) { var i = line.indexOf("："); if (i < 0) return { k: "重點", v: line }; return { k: line.slice(0, i), v: line.slice(i + 1) }; }
+  function bomRowHtml(line, footCls) {
+    var cells = line.split("｜");
+    return '<div class="rv-row' + (footCls ? " rv-foot" : "") + '"><span class="rv-name">' + esc(cells[0] || "") + "</span>" +
+      cells.slice(1).map(function (c) { return '<span class="rv-cell">' + esc(c) + "</span>"; }).join("") + "</div>";
+  }
+  function openReport() {
+    var r = window.__lastReport; if (!r) return;
+    var h = "";
+    h += '<div class="rv-meta">' + esc(r.mode) + "・" + esc(r.date) + "</div>";
+    if (r.summary) h += '<div class="rv-hero">' + esc(r.summary) + "</div>";
+    if (r.stats && r.stats.length) {
+      h += '<div class="rv-stats">';
+      r.stats.forEach(function (line) { if (!line) return; var p = statSplit(line); h += '<div class="rv-stat"><div class="rv-stat-k">' + esc(p.k) + '</div><div class="rv-stat-v">' + esc(p.v) + "</div></div>"; });
+      h += "</div>";
+    }
+    if (r.bom && r.bom.length) {
+      h += '<div class="rv-card"><div class="rv-h">建議設備清單</div>';
+      r.bom.forEach(function (line) { h += bomRowHtml(line, false); });
+      (r.foot || []).forEach(function (line) { h += bomRowHtml(line, true); });
+      if (r.bomNote) h += '<div class="rv-note">' + esc(r.bomNote) + "</div>";
+      h += "</div>";
+    }
+    if (r.health && r.health.length) h += '<div class="rv-card"><div class="rv-h">健檢重點</div><ul class="rv-list">' + r.health.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>";
+    if (r.risks && r.risks.length) h += '<div class="rv-card rv-risk"><div class="rv-h">風險提醒・進場前必辦</div><ul class="rv-list">' + r.risks.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>";
+    if (r.unc && r.unc.length) h += '<div class="rv-card rv-muted"><div class="rv-h">未確認資料（正式設計前補齊）</div><ul class="rv-list">' + r.unc.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>";
+    h += '<div class="rv-foot-note">本報告為初步健檢與選型估算，正式規格與報價以現勘與水質檢測覆核後定案。</div>';
+    G("rvInner").innerHTML = h;
+    G("rvPrint").style.display = /Line\//i.test(navigator.userAgent || "") ? "none" : "";
+    var rvEl = G("reportView"); rvEl.style.display = "block"; rvEl.scrollTop = 0; document.body.style.overflow = "hidden";
+  }
+  function reportShortText(r) {
+    var lines = ["【重點報告】" + r.mode + "・" + r.date, "", r.summary, "", "關鍵數字："];
+    (r.stats || []).forEach(function (s) { if (s) lines.push("・" + s); });
+    if (r.bom && r.bom.length) { lines.push("", "設備清單："); r.bom.concat(r.foot || []).forEach(function (s) { lines.push("・" + s.replace(/｜/g, " ")); }); }
+    if (r.risks && r.risks.length) { lines.push("", "風險提醒："); r.risks.forEach(function (s) { lines.push("・" + s); }); }
+    return lines.join("\n");
+  }
+  G("rvClose").addEventListener("click", function () { G("reportView").style.display = "none"; document.body.style.overflow = ""; });
+  G("rvPrint").addEventListener("click", function () { window.print(); });
+  G("rvCopy").addEventListener("click", function () {
+    var r = window.__lastReport; if (!r) return;
+    var btn = G("rvCopy"), text = reportShortText(r);
+    function done() { btn.textContent = "已複製 ✓"; setTimeout(function () { btn.textContent = "複製重點摘要"; }, 1600); }
+    function fallback() {
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) done(); else { btn.textContent = "複製失敗，請回對話用複製會議摘要"; setTimeout(function () { btn.textContent = "複製重點摘要"; }, 2000); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+  });
 
   startDomains();
 })();
