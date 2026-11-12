@@ -1102,25 +1102,38 @@ body{background:var(--bg)}
         var items = [];
         function add(layer, name, spec, qty, base, src, why) { items.push({ layer: layer, name: name, spec: spec, qty: qty, base: base, src: src, why: why }); }
         var ff = r.ro / 1000;
+        var feedLPH = (r.rec !== null && r.rec > 0) ? r.required / r.rec : null;
+        var fClass = null, fVessel = null;
+        if (feedLPH !== null && feedLPH > 0) {
+          var fgNeed = Math.ceil(feedLPH * 0.264172 / 60 * 1.5 / 10) * 10;
+          if (fgNeed <= 10) { fClass = 10; fVessel = "14\"×65\""; }
+          else if (fgNeed === 20) { fClass = 20; fVessel = "24\"×72\""; }
+        }
+        var uvClass = null;
+        if (r.peakRate > 0) {
+          var uvNeed = r.peakRate * 0.264172 / 60 * 1.8;
+          var UV_LADDER = [12, 24, 48, 96];
+          for (var ui = 0; ui < UV_LADDER.length; ui++) { if (UV_LADDER[ui] >= uvNeed) { if (UV_LADDER[ui] <= 48) uvClass = UV_LADDER[ui]; break; } }
+        }
         add(1, "原水隔離與壓力監測", "進水隔離閥＋壓力表／壓力開關，保護後段設備", "1 式", 15000, "人工暫估", "必備核心：任何 RO 系統的進水保護與狀態監測。");
-        add(1, "前置過濾（砂濾／多介質）", "對應 " + fmt(r.ro) + " LPH 進水量，去除懸浮物降 SDI", "1 組", round1000(50000 + ff * 12000), "人工暫估", "必備核心：RO 進水 SDI 把關。");
+        add(1, "前置過濾（砂濾／多介質）", fClass !== null ? "對應 " + fmt(feedLPH) + " LPH 進水量（名義級距 " + fClass + " GPM，Ø" + fVessel + " 桶），去除懸浮物降 SDI" : "對應 " + fmt(r.ro) + " LPH 進水量，去除懸浮物降 SDI", "1 組", round1000(50000 + ff * 12000), "人工暫估", "必備核心：RO 進水 SDI 把關。");
         add(1, "保安過濾器", "5 µm 精密濾芯，RO 進水最後把關", "1 組", 12000, "歷史採購", "必備核心：攔截前處理洩漏顆粒。");
         add(1, "RO 高壓泵", "對應 " + fmt(r.ro) + " LPH 與回收率初篩揚程需求", "1 台", round1000(38000 + ff * 22000), "人工暫估", "必備核心：提供膜組操作壓力。");
-        add(1, "RO 膜組", fmt(r.ro) + " LPH，" + (r.ro >= 250 ? "8040 膜 × " + r.membranes + " 支低通量設計" : "小型商用膜組低通量設計"), "1 組", round1000(120000 + r.ro * 90), "人工暫估", "必備核心：主脫鹽單元，低通量換膜壽命。");
+        add(1, "RO 膜組", fmt(r.ro) + " LPH，" + (r.ro >= 250 ? "8040 低壓膜（LP 級）× " + r.membranes + " 支低通量設計" : "小型商用膜組低通量設計"), "1 組", round1000(120000 + r.ro * 90), "人工暫估", "必備核心：主脫鹽單元，低通量換膜壽命。");
         add(1, "產水／濃水流量監測", "產水與濃水流量計，回收率即時核對", "1 式", 18000, "人工暫估", "必備核心：回收率與濃水量計算須有實測依據。");
         add(1, "導電度監測", "原水／產水導電度計，脫鹽率監控", "1 式", 22000, "人工暫估", "必備核心：水質達標路徑的連續證據。");
         add(1, "沖洗與排水配置", "膜沖洗管路與濃水排水銜接", "1 式", 12000, "人工暫估", "必備核心：停機沖洗延緩結垢、濃水須有去向。");
         add(1, "控制盤與保護", c.backup === "dual" || c.target === "high" || c.target === "upw" ? "PLC／HMI 監控、全儀表回傳與異常預警" : "自動控制盤、液位與壓力保護連鎖", "1 式", (c.backup === "dual" || c.target === "high" || c.target === "upw") ? 230000 : 65000, "歷史採購", "必備核心：自動啟停與故障保護。");
-        if (c.chlorine !== "no") add(2, "活性碳過濾器", c.chlorine === "unknown" ? "餘氯未檢測，先以除氯保底" : "去除餘氯，保護 RO 膜", "1 組", round1000(52000 + ff * 12000), "人工暫估", "水質條件觸發：餘氯存在（或未檢測保底）→ 膜不耐氯。");
+        if (c.chlorine !== "no") add(2, "活性碳過濾器", (c.chlorine === "unknown" ? "餘氯未檢測，先以除氯保底" : "去除餘氯，保護 RO 膜") + (fClass !== null ? "；名義級距 " + fClass + " GPM（Ø" + fVessel + " 桶，與砂濾同桶）" : ""), "1 組", round1000(52000 + ff * 12000), "人工暫估", "水質條件觸發：餘氯存在（或未檢測保底）→ 膜不耐氯。");
         if (c.hard !== null && c.hard > 100) add(2, "樹脂軟化設備", "硬度 " + fmt(c.hard) + " mg/L 對應容量，自動再生", "1 組", round1000(56000 + ff * 14000), "人工暫估", "水質條件觸發：硬度偏高 → 軟化或降回收管理結垢。");
         if (c.sdi !== null && c.sdi > 3) add(2, "加強前處理（UF 評估）", "SDI " + c.sdi + " 不合 RO 進水要求，先降 SDI 再進膜", "1 組", round1000(80000 + ff * 20000), "人工暫估", "水質條件觸發：SDI 不合 → 加強前處理。");
         if ((c.iron !== null && c.iron > 0.3) || (c.mn !== null && c.mn > 0.1)) add(2, "氧化過濾除鐵錳", "曝氣／氧化＋除鐵錳濾材，進 RO 前去除", "1 組", round1000(68000 + ff * 14000), "人工暫估", "水質條件觸發：鐵錳超標 → 氧化過濾。");
-        if (c.loop === "yes" || c.terminal === "fountain" || c.target !== "process") add(2, "消毒單元（UV）", c.loop === "yes" ? "供水＋迴水雙點殺菌" : "出水端殺菌把關", "1 台", r.ro >= 1000 ? 45000 : 28000, "歷史採購", "水質條件觸發：微生物風險／迴水殺菌需求 → 消毒。");
+        if (c.loop === "yes" || c.terminal === "fountain" || c.target !== "process") add(2, "消毒單元（UV）", (c.loop === "yes" ? "供水＋迴水雙點殺菌" : "出水端殺菌把關") + (uvClass !== null ? "，UV 級距 " + uvClass + " GPM" : ""), "1 台", r.ro >= 1000 ? 45000 : 28000, "歷史採購", "水質條件觸發：微生物風險／迴水殺菌需求 → 消毒。");
         if (c.target === "high" || c.target === "upw") add(2, "EDI 連續除鹽模組", "連續產出高純水，免酸鹼再生", "1 組", round1000(120000 + r.ro * 60), "人工暫估", "水質條件觸發：目標 ≥10 MΩ·cm → RO 後須連續除鹽。");
         if (c.target === "pure") add(2, "拋光混床", "RO 後段拋光至 ≥1 MΩ·cm", "1 組", 60000, "人工暫估", "水質條件觸發：目標 ≥1 MΩ·cm → 拋光。");
         if (c.target === "upw") add(2, "終端拋光＋UV（TOC 控制）", "超純水終端把關", "1 組", 88000, "人工暫估", "水質條件觸發：超純水終端品質把關。");
         if (r.tank > 0) add(3, "不鏽鋼產水槽", "304 不鏽鋼 " + fmt(r.tank) + " L（尖峰缺口公式估算 " + fmt(r.tankRaw) + " L，規格取上一級）", "1 座", round1000(r.tank * 20), "歷史採購", "需求觸發：尖峰用水速率高於產水速率，缺口須儲水緩衝。");
-        if (c.floors >= 4 || c.terminal === "fountain" || c.terminal === "mixed") add(3, "供水泵組（變頻恆壓）", c.backup === "none" ? "單泵變頻恆壓，揚程分項精算" : "雙泵輪替備援，揚程分項精算", "1 組", c.backup === "none" ? 48000 : 85000, "歷史採購", "需求與末端觸發：高樓層／多點供水 → 恆壓供水。");
+        if (c.floors >= 4 || c.terminal === "fountain" || c.terminal === "mixed") add(3, "供水泵組（變頻恆壓）", (r.ro <= 2500 ? "1HP 級，" : "") + (c.backup === "none" ? "單泵變頻恆壓，揚程分項精算" : "雙泵輪替備援，揚程分項精算"), "1 組", c.backup === "none" ? 48000 : 85000, "歷史採購", "需求與末端觸發：高樓層／多點供水 → 恆壓供水。");
         if (c.terminal === "fountain") { add(3, "大容量壓力桶或末端加壓泵（評估）", "飲水台無內部儲水，瞬時流量主導，末端殘壓以 20 m 計", "1 式", 35000, "人工暫估", "末端觸發：飲水台瞬時流量 → 壓力桶或末端加壓評估。"); add(3, "變頻恆壓與大幹管評估", "多口同時取水，主管管徑與壓降須專項評估", "1 式", 20000, "人工暫估", "末端觸發：飲水台多口同時出水 → 恆壓與大幹管。"); }
         if (c.backup === "dual") add(3, "雙泵備援與監控預警", "關鍵案場不停供：雙泵備援＋異常預警", "1 式", 60000, "人工暫估", "需求觸發：不停供要求 → 備援。");
         if (pm) add(3, "飲水機（" + pm.type.name + "）", "每台服務約 " + Math.round(pm.per) + " 人，尖峰出水 " + pm.type.peakLPH + " LPH／台（人數模式交叉檢核帶入）", pm.count + " 台", pm.count * pm.type.price, "人工暫估", "需求觸發：人數模式台數結論（交叉檢核值）。");
@@ -1717,7 +1730,7 @@ lines.push("・供水樓高：" + c.floors + " 樓；迴水循環殺菌：" + (c
 lines.push("");
 lines.push("二、選型計算");
 lines.push("・所需產水速率 ＝ " + fmt(c.daily) + " ÷ " + c.hours + " × 1.20 容量預留係數 ＝ " + fmt(r.required) + " LPH（初期產水能力，未含膜衰減預留；不與儲水裕度重複相乘）");
-lines.push("・建議 RO 主機：" + fmt(r.ro) + " LPH（" + (r.ro >= 250? "8040 膜 × " + r.membranes + " 支": "小型商用膜組") + "，低通量設計，餘裕 " + Math.round(r.margin * 100) + "%）");
+lines.push("・建議 RO 主機：" + fmt(r.ro) + " LPH（" + (r.ro >= 250? "8040 低壓膜（LP 級）× " + r.membranes + " 支": "小型商用膜組") + "，低通量設計，餘裕 " + Math.round(r.margin * 100) + "%）");
 lines.push("・儲水需求 ＝（尖峰用水速率 " + fmt(r.peakRate) + " − 產水速率 " + fmt(r.required) + "）× 尖峰持續 " + (c.peakDurMin / 60) + " h ＝ " + fmt(r.tankRaw) + " L → 建議 " + fmt(r.tank) + " L");
 lines.push("・回收率初篩：" + (r.rec!== null? Math.round(r.rec * 100) + "%（" + c.scr.why + "），濃縮倍數 CF ＝ 1 ÷（1 − " + r.rec + "）＝ " + r.cf.toFixed(2) + "；濃水量 ＝ " + fmt(r.required) + " ×（1 − " + r.rec + "）÷ " + r.rec + " ＝ " + fmt(r.concRate) + " L/h，日濃水量 ＝ × " + c.hours + " h ＝ " + fmt(r.concDay) + " L": "不自動給定（" + c.scr.why + "）") + "。初篩建議，正式回收率須以完整水質確認。");
 lines.push("・揚程：" + (r.headTotal!== null? "靜揚程 " + fmt1(r.staticHead) + "＋管損 " + fmt1(r.pipeLoss) + "（簡式估算）＋設備壓損 " + fmt1(c.equipLoss) + "＋末端殘壓 " + r.residual + " ＝ " + fmt1(r.headTotal) + " m": "揚程未完成（管長／管徑未輸入，不輸出泵型結論）") + "；NPSH 需另行核對、不併入揚程");
