@@ -2062,7 +2062,7 @@ setMode("people");
         setField(st.id, v); inputEl.value = "";
         advance(v);
       };
-      inputEl.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); sendBtn.onclick(); } };
+      inputEl.onkeydown = function (e) { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); sendBtn.onclick(); } };
       if (el.value !== "") {
         addChip("就用這個（目前：" + el.value + "）", "primary", function () { advance("就用這個（" + el.value + "）"); });
         addChip("我要改數字", "", function () { inputEl.focus(); scroll(); });
